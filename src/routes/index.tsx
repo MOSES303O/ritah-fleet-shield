@@ -4,6 +4,7 @@ import Hero from "@/components/Hero";
 import WhyNow from "@/components/WhyNow";
 import Features from "@/components/Features";
 import Dashboards from "@/components/Dashboards";
+import ContractFlow from "@/components/ContractFlow";
 import CTA from "@/components/CTA";
 
 export const Route = createFileRoute("/")({
@@ -34,6 +35,7 @@ function Index() {
       <WhyNow />
       <Features />
       <Dashboards />
+      <ContractFlow />
       <CTA />
     </main>
   );
