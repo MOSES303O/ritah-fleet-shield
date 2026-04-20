@@ -1,7 +1,27 @@
 import { motion } from "framer-motion";
-import { ArrowRight } from "lucide-react";
+import { ArrowRight, Check } from "lucide-react";
+import { useState } from "react";
+import { addSignup } from "@/lib/signups";
+import { Link } from "@tanstack/react-router";
 
 export default function CTA() {
+  const [email, setEmail] = useState("");
+  const [done, setDone] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+
+  const submit = (e: React.FormEvent) => {
+    e.preventDefault();
+    setError(null);
+    const clean = email.trim();
+    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(clean) || clean.length > 255) {
+      setError("Enter a valid work email.");
+      return;
+    }
+    addSignup(clean);
+    setDone(true);
+    setEmail("");
+  };
+
   return (
     <section id="cta" className="py-28">
       <div className="mx-auto max-w-5xl px-6">
@@ -26,23 +46,51 @@ export default function CTA() {
               workflow in under 48 hours — no logbook drama, no insurance
               surprises.
             </p>
-            <form
-              onSubmit={(e) => e.preventDefault()}
-              className="mt-8 flex flex-col sm:flex-row gap-3 max-w-md mx-auto"
-            >
-              <input
-                type="email"
-                required
-                placeholder="fleet@yourcompany.co.ke"
-                className="flex-1 rounded-full bg-black/40 border border-white/10 px-5 py-3 text-sm focus:outline-none focus:border-[var(--neon)] transition"
-              />
-              <button className="inline-flex items-center justify-center gap-2 rounded-full bg-[var(--neon)] text-[var(--primary-foreground)] px-6 py-3 font-semibold shadow-[0_0_30px_rgba(0,217,255,0.5)] hover:scale-[1.02] transition">
-                Get Access
-                <ArrowRight className="h-4 w-4" />
-              </button>
-            </form>
+
+            {!done ? (
+              <form
+                onSubmit={submit}
+                className="mt-8 flex flex-col sm:flex-row gap-3 max-w-md mx-auto"
+              >
+                <input
+                  type="email"
+                  required
+                  value={email}
+                  onChange={(e) => setEmail(e.target.value)}
+                  maxLength={255}
+                  placeholder="fleet@yourcompany.co.ke"
+                  className="flex-1 rounded-full bg-black/40 border border-white/10 px-5 py-3 text-sm focus:outline-none focus:border-[var(--neon)] transition"
+                />
+                <button className="inline-flex items-center justify-center gap-2 rounded-full bg-[var(--neon)] text-[var(--primary-foreground)] px-6 py-3 font-semibold shadow-[0_0_30px_rgba(0,217,255,0.5)] hover:scale-[1.02] transition">
+                  Get Access
+                  <ArrowRight className="h-4 w-4" />
+                </button>
+              </form>
+            ) : (
+              <motion.div
+                initial={{ opacity: 0, y: 8 }}
+                animate={{ opacity: 1, y: 0 }}
+                className="mt-8 inline-flex items-center gap-2 rounded-full bg-[var(--lime)]/15 border border-[var(--lime)]/40 px-5 py-3 text-sm font-mono text-[var(--lime)]"
+              >
+                <Check className="h-4 w-4" />
+                You're on the list. We'll be in touch within 48h.
+              </motion.div>
+            )}
+            {error && (
+              <div className="mt-3 text-xs font-mono text-[var(--danger)]">
+                {error}
+              </div>
+            )}
+
             <div className="mt-6 text-xs text-muted-foreground font-mono">
-              No credit card · Onboarding in 48h · Pilot ends Dec 2026
+              No credit card · Onboarding in 48h ·{" "}
+              <Link to="/admin" className="underline hover:text-[var(--neon)]">
+                View admin
+              </Link>{" "}
+              ·{" "}
+              <Link to="/tracker" className="underline hover:text-[var(--neon)]">
+                Live tracker
+              </Link>
             </div>
           </div>
         </motion.div>
