@@ -29,14 +29,18 @@ export const Route = createRootRoute({
     meta: [
       { charSet: "utf-8" },
       { name: "viewport", content: "width=device-width, initial-scale=1" },
-      { title: "Lovable App" },
-      { name: "description", content: "Lovable Generated Project" },
+      { title: "Ritah" },
+      { name: "description", content: "Ritah Shield automates NTSA instant fine liability for car hire companies using blockchain." },
       { name: "author", content: "Lovable" },
-      { property: "og:title", content: "Lovable App" },
-      { property: "og:description", content: "Lovable Generated Project" },
+      { property: "og:title", content: "Ritah" },
+      { property: "og:description", content: "Ritah Shield automates NTSA instant fine liability for car hire companies using blockchain." },
       { property: "og:type", content: "website" },
       { name: "twitter:card", content: "summary" },
       { name: "twitter:site", content: "@Lovable" },
+      { name: "twitter:title", content: "Ritah" },
+      { name: "twitter:description", content: "Ritah Shield automates NTSA instant fine liability for car hire companies using blockchain." },
+      { property: "og:image", content: "https://pub-bb2e103a32db4e198524a2e9ed8f35b4.r2.dev/0d0627ca-eb50-4997-825d-a92979098152/id-preview-930b44a7--f3566b95-2622-498a-8b5b-e669344bda98.lovable.app-1776722668738.png" },
+      { name: "twitter:image", content: "https://pub-bb2e103a32db4e198524a2e9ed8f35b4.r2.dev/0d0627ca-eb50-4997-825d-a92979098152/id-preview-930b44a7--f3566b95-2622-498a-8b5b-e669344bda98.lovable.app-1776722668738.png" },
     ],
     links: [
       {
