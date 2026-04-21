@@ -1,5 +1,5 @@
 import { Canvas, useFrame } from "@react-three/fiber";
-import { Float, Environment, Sparkles } from "@react-three/drei";
+import { Float, Sparkles } from "@react-three/drei";
 import { Suspense, useRef } from "react";
 import * as THREE from "three";
 
@@ -139,7 +139,6 @@ export default function HeroScene() {
 
         <Road />
         <Sparkles count={60} scale={[10, 4, 6]} size={2} speed={0.4} color="#00f0ff" />
-        <Environment preset="night" />
       </Suspense>
     </Canvas>
   );
