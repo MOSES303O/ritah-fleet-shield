@@ -17,6 +17,7 @@ import { useMemo, useState } from "react";
 import {
   customerWallet,
   formatKes,
+  getAvailabilityRules,
   ntsaFineCatalog,
   ownerProfile,
   rentalFleet,
@@ -40,6 +41,9 @@ const emptyForm = {
   ratePerDay: 4500,
   stake: 8000,
   speedLimit: 80,
+  allowedHours: "06:00–22:00",
+  maxHireDays: 7,
+  requiresWalletMinimum: 9000,
   available: true,
 };
 
@@ -56,7 +60,7 @@ export default function RentalWorkflow() {
   const [contracts, setContracts] = useState<HireContract[]>([]);
   const [fines, setFines] = useState<NtsaFine[]>([]);
   const [ledger, setLedger] = useState<WalletLedger[]>([
-    { id: "seed-ledger", type: "LOAD", amount: customerWallet.balance, note: "Demo wallet opening balance", createdAt: now() },
+    { id: "seed-ledger", type: "LOAD", amount: customerWallet.balance, note: "Demo wallet opening balance", createdAt: "09:00" },
   ]);
 
   const availableCars = cars.filter((car) => car.available && car.ownerListed);
@@ -66,6 +70,7 @@ export default function RentalWorkflow() {
     return `${car.reg} ${car.make} ${car.model} ${car.location}`.toLowerCase().includes(needle);
   });
   const selectedCar = cars.find((car) => car.id === selectedId) ?? availableCars[0];
+  const selectedRules = selectedCar ? getAvailabilityRules(selectedCar, walletBalance) : [];
   const activeContract = contracts.find((contract) => contract.status === "ACTIVE");
   const lockedStake = contracts.filter((contract) => contract.status === "ACTIVE").reduce((sum, contract) => sum + contract.stake, 0);
   const availableWallet = walletBalance - lockedStake;
@@ -96,6 +101,9 @@ export default function RentalWorkflow() {
       ratePerDay: car.ratePerDay,
       stake: car.stake,
       speedLimit: car.speedLimit,
+      allowedHours: car.allowedHours,
+      maxHireDays: car.maxHireDays,
+      requiresWalletMinimum: car.requiresWalletMinimum,
       available: car.available,
     });
   };
@@ -225,6 +233,9 @@ export default function RentalWorkflow() {
               <Field label="Pickup" value={form.location} onChange={(value) => setForm((prev) => ({ ...prev, location: value }))} disabled={!ownerLoggedIn} />
               <NumberField label="Rate/day" value={form.ratePerDay} onChange={(value) => setForm((prev) => ({ ...prev, ratePerDay: value }))} disabled={!ownerLoggedIn} />
               <NumberField label="Stake" value={form.stake} onChange={(value) => setForm((prev) => ({ ...prev, stake: value }))} disabled={!ownerLoggedIn} />
+              <Field label="Allowed hours" value={form.allowedHours} onChange={(value) => setForm((prev) => ({ ...prev, allowedHours: value }))} disabled={!ownerLoggedIn} />
+              <NumberField label="Max hire days" value={form.maxHireDays} onChange={(value) => setForm((prev) => ({ ...prev, maxHireDays: value }))} disabled={!ownerLoggedIn} />
+              <NumberField label="Wallet minimum" value={form.requiresWalletMinimum} onChange={(value) => setForm((prev) => ({ ...prev, requiresWalletMinimum: value }))} disabled={!ownerLoggedIn} />
             </div>
             <button onClick={saveCar} disabled={!ownerLoggedIn} className="mt-3 w-full rounded-lg bg-primary text-primary-foreground py-2.5 text-sm font-bold disabled:opacity-40">{editingId ? "Update fleet car" : "Create fleet listing"}</button>
 
@@ -290,6 +301,10 @@ export default function RentalWorkflow() {
                 <label className="mt-6 block text-xs font-mono text-muted-foreground">Liability stake amount: <span className="text-[var(--lime)]">{formatKes(stake)}</span></label>
                 <input type="range" min={STAKE_MIN} max={STAKE_MAX} step={500} value={stake} onChange={(event) => setStake(Number(event.target.value))} className="mt-3 w-full accent-[var(--lime)]" />
                 <div className="mt-2 flex justify-between text-[10px] font-mono text-muted-foreground"><span>{formatKes(STAKE_MIN)}</span><span>{formatKes(STAKE_MAX)}</span></div>
+
+                <div className="mt-5 grid sm:grid-cols-2 gap-2">
+                  {selectedRules.map((rule) => <div key={rule.id} className="rounded-lg border border-border bg-background/30 px-3 py-2 text-xs"><div className={rule.pass ? "text-[var(--lime)]" : "text-[var(--danger)]"}>{rule.label}</div><div className="text-muted-foreground">{rule.detail}</div></div>)}
+                </div>
 
                 <button onClick={buildContract} disabled={!walletReady} className="mt-5 w-full rounded-lg bg-[var(--lime)] text-[var(--accent-foreground)] py-3 text-sm font-bold disabled:opacity-40"><FileText className="inline h-4 w-4 mr-2" />Build hire contract record</button>
                 <div className="mt-4 flex items-center gap-2 text-sm">
