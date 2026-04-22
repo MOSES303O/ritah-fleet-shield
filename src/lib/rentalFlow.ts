@@ -7,6 +7,7 @@ export type FleetCar = {
   location: string;
   ratePerDay: number;
   stake: number;
+  speedLimit: number;
   available: boolean;
   ownerListed: boolean;
 };
@@ -15,6 +16,36 @@ export type Wallet = {
   holder: string;
   balance: number;
   verified: boolean;
+};
+
+export type HireContract = {
+  id: string;
+  carId: string;
+  renter: string;
+  stake: number;
+  ratePerDay: number;
+  status: "ACTIVE" | "CLOSED";
+  createdAt: string;
+};
+
+export type NtsaFine = {
+  id: string;
+  contractId: string;
+  reg: string;
+  reason: string;
+  speed: number;
+  limit: number;
+  amount: number;
+  status: "AUTO-DEDUCTED" | "INSUFFICIENT WALLET";
+  createdAt: string;
+};
+
+export type WalletLedger = {
+  id: string;
+  type: "LOAD" | "WITHDRAW" | "STAKE LOCK" | "NTSA FINE";
+  amount: number;
+  note: string;
+  createdAt: string;
 };
 
 export const STAKE_MIN = 5000;
@@ -42,6 +73,7 @@ export const rentalFleet: FleetCar[] = [
     location: "Westlands",
     ratePerDay: 4200,
     stake: 8500,
+    speedLimit: 80,
     available: true,
     ownerListed: true,
   },
@@ -54,6 +86,7 @@ export const rentalFleet: FleetCar[] = [
     location: "Kilimani",
     ratePerDay: 3600,
     stake: 7000,
+    speedLimit: 70,
     available: true,
     ownerListed: true,
   },
@@ -66,6 +99,7 @@ export const rentalFleet: FleetCar[] = [
     location: "Karen",
     ratePerDay: 6800,
     stake: 10000,
+    speedLimit: 80,
     available: true,
     ownerListed: false,
   },
@@ -78,9 +112,17 @@ export const rentalFleet: FleetCar[] = [
     location: "Upper Hill",
     ratePerDay: 5200,
     stake: 9000,
+    speedLimit: 90,
     available: false,
     ownerListed: true,
   },
+];
+
+export const ntsaFineCatalog = [
+  { reason: "SPEED 92/80", amount: 3000, speed: 92 },
+  { reason: "RED LIGHT CAMERA", amount: 5000, speed: 74 },
+  { reason: "PHONE USE", amount: 2000, speed: 62 },
+  { reason: "LANE DISCIPLINE", amount: 1500, speed: 68 },
 ];
 
 export function formatKes(amount: number) {
