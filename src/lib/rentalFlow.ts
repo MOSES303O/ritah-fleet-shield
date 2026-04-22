@@ -8,6 +8,9 @@ export type FleetCar = {
   ratePerDay: number;
   stake: number;
   speedLimit: number;
+  allowedHours: string;
+  maxHireDays: number;
+  requiresWalletMinimum: number;
   available: boolean;
   ownerListed: boolean;
 };
@@ -48,6 +51,14 @@ export type WalletLedger = {
   createdAt: string;
 };
 
+export type AvailabilityRule = {
+  id: string;
+  carId: string;
+  label: string;
+  detail: string;
+  pass: boolean;
+};
+
 export const STAKE_MIN = 5000;
 export const STAKE_MAX = 10000;
 
@@ -74,6 +85,9 @@ export const rentalFleet: FleetCar[] = [
     ratePerDay: 4200,
     stake: 8500,
     speedLimit: 80,
+    allowedHours: "06:00–22:00",
+    maxHireDays: 14,
+    requiresWalletMinimum: 9000,
     available: true,
     ownerListed: true,
   },
@@ -87,6 +101,9 @@ export const rentalFleet: FleetCar[] = [
     ratePerDay: 3600,
     stake: 7000,
     speedLimit: 70,
+    allowedHours: "05:30–21:30",
+    maxHireDays: 10,
+    requiresWalletMinimum: 7500,
     available: true,
     ownerListed: true,
   },
@@ -100,6 +117,9 @@ export const rentalFleet: FleetCar[] = [
     ratePerDay: 6800,
     stake: 10000,
     speedLimit: 80,
+    allowedHours: "07:00–20:00",
+    maxHireDays: 7,
+    requiresWalletMinimum: 12000,
     available: true,
     ownerListed: false,
   },
@@ -113,6 +133,9 @@ export const rentalFleet: FleetCar[] = [
     ratePerDay: 5200,
     stake: 9000,
     speedLimit: 90,
+    allowedHours: "06:00–19:00",
+    maxHireDays: 5,
+    requiresWalletMinimum: 11000,
     available: false,
     ownerListed: true,
   },
@@ -127,4 +150,14 @@ export const ntsaFineCatalog = [
 
 export function formatKes(amount: number) {
   return `KES ${amount.toLocaleString("en-KE")}`;
+}
+
+export function getAvailabilityRules(car: FleetCar, walletBalance: number): AvailabilityRule[] {
+  return [
+    { id: `${car.id}-listed`, carId: car.id, label: "Owner listed", detail: car.ownerListed ? "Visible to renters" : "Hidden by owner", pass: car.ownerListed },
+    { id: `${car.id}-status`, carId: car.id, label: "Vehicle free", detail: car.available ? "No active hire contract" : "Currently hired", pass: car.available },
+    { id: `${car.id}-wallet`, carId: car.id, label: "Wallet minimum", detail: `${formatKes(car.requiresWalletMinimum)} required before handover`, pass: walletBalance >= car.requiresWalletMinimum },
+    { id: `${car.id}-hours`, carId: car.id, label: "Pickup window", detail: car.allowedHours, pass: true },
+    { id: `${car.id}-duration`, carId: car.id, label: "Maximum hire", detail: `${car.maxHireDays} days per contract`, pass: true },
+  ];
 }
