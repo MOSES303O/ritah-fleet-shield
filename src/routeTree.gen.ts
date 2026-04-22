@@ -11,6 +11,7 @@
 import { Route as rootRouteImport } from './routes/__root'
 import { Route as UserRouteImport } from './routes/user'
 import { Route as TrackerRouteImport } from './routes/tracker'
+import { Route as ContractsRouteImport } from './routes/contracts'
 import { Route as AdminRouteImport } from './routes/admin'
 import { Route as IndexRouteImport } from './routes/index'
 
@@ -22,6 +23,11 @@ const UserRoute = UserRouteImport.update({
 const TrackerRoute = TrackerRouteImport.update({
   id: '/tracker',
   path: '/tracker',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ContractsRoute = ContractsRouteImport.update({
+  id: '/contracts',
+  path: '/contracts',
   getParentRoute: () => rootRouteImport,
 } as any)
 const AdminRoute = AdminRouteImport.update({
@@ -38,12 +44,14 @@ const IndexRoute = IndexRouteImport.update({
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/admin': typeof AdminRoute
+  '/contracts': typeof ContractsRoute
   '/tracker': typeof TrackerRoute
   '/user': typeof UserRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/admin': typeof AdminRoute
+  '/contracts': typeof ContractsRoute
   '/tracker': typeof TrackerRoute
   '/user': typeof UserRoute
 }
@@ -51,20 +59,22 @@ export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
   '/admin': typeof AdminRoute
+  '/contracts': typeof ContractsRoute
   '/tracker': typeof TrackerRoute
   '/user': typeof UserRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
-  fullPaths: '/' | '/admin' | '/tracker' | '/user'
+  fullPaths: '/' | '/admin' | '/contracts' | '/tracker' | '/user'
   fileRoutesByTo: FileRoutesByTo
-  to: '/' | '/admin' | '/tracker' | '/user'
-  id: '__root__' | '/' | '/admin' | '/tracker' | '/user'
+  to: '/' | '/admin' | '/contracts' | '/tracker' | '/user'
+  id: '__root__' | '/' | '/admin' | '/contracts' | '/tracker' | '/user'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
   AdminRoute: typeof AdminRoute
+  ContractsRoute: typeof ContractsRoute
   TrackerRoute: typeof TrackerRoute
   UserRoute: typeof UserRoute
 }
@@ -83,6 +93,13 @@ declare module '@tanstack/react-router' {
       path: '/tracker'
       fullPath: '/tracker'
       preLoaderRoute: typeof TrackerRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/contracts': {
+      id: '/contracts'
+      path: '/contracts'
+      fullPath: '/contracts'
+      preLoaderRoute: typeof ContractsRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/admin': {
@@ -105,6 +122,7 @@ declare module '@tanstack/react-router' {
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   AdminRoute: AdminRoute,
+  ContractsRoute: ContractsRoute,
   TrackerRoute: TrackerRoute,
   UserRoute: UserRoute,
 }
