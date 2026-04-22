@@ -101,6 +101,9 @@ export default function RentalWorkflow() {
       ratePerDay: car.ratePerDay,
       stake: car.stake,
       speedLimit: car.speedLimit,
+      allowedHours: car.allowedHours,
+      maxHireDays: car.maxHireDays,
+      requiresWalletMinimum: car.requiresWalletMinimum,
       available: car.available,
     });
   };
