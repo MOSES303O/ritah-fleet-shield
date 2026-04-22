@@ -20,6 +20,8 @@ export default function Nav() {
             <a href="/#features" className="hover:text-foreground transition">How it works</a>
             <a href="/#rental-flow" className="hover:text-foreground transition">Rentals</a>
             <a href="/#flow" className="hover:text-foreground transition">Flow</a>
+            <Link to="/user" className="hover:text-foreground transition" activeProps={{ className: "text-foreground" }}>User</Link>
+            <Link to="/contracts" className="hover:text-foreground transition" activeProps={{ className: "text-foreground" }}>Contracts</Link>
             <Link to="/tracker" className="hover:text-foreground transition" activeProps={{ className: "text-foreground" }}>Tracker</Link>
             <Link to="/admin" className="hover:text-foreground transition" activeProps={{ className: "text-foreground" }}>Admin</Link>
           </nav>
