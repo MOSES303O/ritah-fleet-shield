@@ -1,4 +1,4 @@
-// Deterministic-ish mock fleet generator for the Live Tracker + Admin pages.
+// Deterministic mock fleet generator for the Live Tracker + Admin pages.
 export type Vehicle = {
   id: string;
   reg: string;
@@ -47,18 +47,23 @@ const TYPES: Array<{ t: string; amt: number }> = [
 // Nairobi center
 const NAIROBI = { lat: -1.2921, lng: 36.8219 };
 
+function seededUnit(seed: number) {
+  const value = Math.sin(seed * 999) * 10000;
+  return value - Math.floor(value);
+}
+
 export function seedFleet(): Vehicle[] {
   return REGS.map((reg, i) => ({
     id: `v-${i}`,
     reg,
     driver: DRIVERS[i % DRIVERS.length],
-    speed: 40 + Math.floor(Math.random() * 50),
+    speed: 42 + ((i * 9) % 44),
     limit: 80,
-    lat: NAIROBI.lat + (Math.random() - 0.5) * 0.08,
-    lng: NAIROBI.lng + (Math.random() - 0.5) * 0.08,
+    lat: NAIROBI.lat + (seededUnit(i + 1) - 0.5) * 0.08,
+    lng: NAIROBI.lng + (seededUnit(i + 7) - 0.5) * 0.08,
     status: "OK",
     stake: 8500,
-    lastPing: new Date().toISOString(),
+    lastPing: "2026-04-21T09:00:00.000Z",
   }));
 }
 
