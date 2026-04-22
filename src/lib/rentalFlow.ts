@@ -148,6 +148,23 @@ export const ntsaFineCatalog = [
   { reason: "LANE DISCIPLINE", amount: 1500, speed: 68 },
 ];
 
+export const mockWalletHistory: WalletLedger[] = [
+  { id: "wallet-1", type: "LOAD", amount: 12500, note: "M-Pesa wallet load simulation", createdAt: "09:00" },
+  { id: "wallet-2", type: "STAKE LOCK", amount: 8500, note: "KDM 421X hire stake locked", createdAt: "09:12" },
+  { id: "wallet-3", type: "NTSA FINE", amount: 3000, note: "Speed fine auto-deducted", createdAt: "10:25" },
+  { id: "wallet-4", type: "WITHDRAW", amount: 1000, note: "Unlocked funds withdrawn", createdAt: "11:05" },
+];
+
+export const mockFineLedger: NtsaFine[] = [
+  { id: "fine-1", contractId: "contract-1", reg: "KDM 421X", reason: "SPEED 92/80", speed: 92, limit: 80, amount: 3000, status: "AUTO-DEDUCTED", createdAt: "10:25" },
+  { id: "fine-2", contractId: "contract-1", reg: "KDM 421X", reason: "PHONE USE", speed: 62, limit: 80, amount: 2000, status: "AUTO-DEDUCTED", createdAt: "12:10" },
+];
+
+export const mockHireContracts: HireContract[] = [
+  { id: "contract-1", carId: "car-1", renter: customerWallet.holder, stake: 8500, ratePerDay: 4200, status: "ACTIVE", createdAt: "09:12" },
+  { id: "contract-2", carId: "car-2", renter: customerWallet.holder, stake: 7000, ratePerDay: 3600, status: "CLOSED", createdAt: "Yesterday" },
+];
+
 export function formatKes(amount: number) {
   return `KES ${amount.toLocaleString("en-KE")}`;
 }
