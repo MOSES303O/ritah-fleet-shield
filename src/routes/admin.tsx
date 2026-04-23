@@ -132,6 +132,33 @@ function AdminPage() {
           />
         </div>
 
+        <section className="mb-5 glass rounded-2xl p-5">
+          <div className="mb-4 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+            <div>
+              <h2 className="text-sm font-semibold"><FileTextIcon />Admin-only hire contracts</h2>
+              <p className="mt-1 text-xs text-muted-foreground">Owner creates contracts and approves renter requests tied to phone and email delegation.</p>
+            </div>
+            <button onClick={createAdminContract} className="rounded-lg bg-[var(--neon)] px-4 py-2 text-xs font-bold text-[var(--primary-foreground)]"><Plus className="mr-1 inline h-4 w-4" />Create contract</button>
+          </div>
+          <div className="grid gap-3 lg:grid-cols-2">
+            {ownerContracts.map((contract) => {
+              const car = rentalFleet.find((item) => item.id === contract.carId);
+              return (
+                <div key={contract.id} className="rounded-xl border border-border bg-background/30 p-4 text-xs">
+                  <div className="flex items-start justify-between gap-3">
+                    <div><div className="font-mono text-[var(--neon)]">{contract.id}</div><div className="mt-1 font-semibold">{car?.reg} · {car?.make} {car?.model}</div></div>
+                    <span className={contract.status === "REQUESTED" ? "text-[var(--danger)]" : "text-[var(--lime)]"}>{contract.status}</span>
+                  </div>
+                  <div className="mt-2 text-muted-foreground" suppressHydrationWarning>{contract.renter} · {contract.renterPhone} · {contract.renterEmail}</div>
+                  <div className="mt-2 text-foreground">Stake {formatKes(contract.stake)} · Rate {formatKes(contract.ratePerDay)}/day</div>
+                  {contract.status === "REQUESTED" && <button onClick={() => approveContract(contract.id)} className="mt-3 rounded-lg border border-[var(--lime)]/40 bg-[var(--lime)]/10 px-3 py-2 text-[11px] font-bold text-[var(--lime)]"><CheckCircle2 className="mr-1 inline h-4 w-4" />Approve request</button>}
+                </div>
+              );
+            })}
+          </div>
+          <div className="mt-3 text-xs text-muted-foreground">Pending owner approvals: <span className="text-foreground">{requestedContracts.length}</span></div>
+        </section>
+
         <div className="grid lg:grid-cols-2 gap-5">
           {/* Signups */}
           <div className="glass rounded-2xl p-5">
@@ -276,25 +303,14 @@ function AdminPage() {
               <span className="text-[11px] font-mono text-[var(--lime)]">ADMIN / OWNER REVIEW</span>
             </div>
             <div className="space-y-2">
-              {mockHireContracts.map((contract) => {
+              {ownerContracts.map((contract) => {
                 const car = rentalFleet.find((item) => item.id === contract.carId);
                 return <div key={contract.id} className="rounded-lg border border-border bg-background/30 p-3 text-xs"><div className="flex justify-between gap-3"><span className="font-mono text-[var(--neon)]">{car?.reg}</span><span className={contract.status === "ACTIVE" ? "text-[var(--lime)]" : "text-muted-foreground"}>{contract.status}</span></div><div className="mt-1 text-muted-foreground">{contract.renter} · {contract.delegatedTo}</div><div className="mt-1 text-foreground">Stake {formatKes(contract.stake)} · Rate {formatKes(contract.ratePerDay)}/day</div></div>;
               })}
             </div>
           </section>
 
-          <section className="glass rounded-2xl p-5">
-            <div className="mb-4 flex items-center justify-between gap-3">
-              <h2 className="text-sm font-semibold"><AlertTriangle className="inline h-4 w-4 mr-2 text-[var(--danger)]" />Owner fine ledger</h2>
-              <span className="text-[11px] font-mono text-[var(--lime)]">Σ {formatKes(ownerFineTotal)}</span>
-            </div>
-            <div className="space-y-2">
-              {mockFineLedger.map((fine) => {
-                const contract = mockHireContracts.find((item) => item.id === fine.contractId);
-                return <div key={fine.id} className="rounded-lg border border-border bg-background/30 p-3 text-xs"><div className="flex justify-between gap-3"><span className="font-mono text-[var(--danger)]">{fine.reason}</span><span>{formatKes(fine.amount)}</span></div><div className="mt-1 text-muted-foreground">{fine.reg} · {fine.speed}/{fine.limit} km/h · {fine.status}</div><div className="mt-1 text-[var(--lime)]">Assigned renter: {contract?.delegatedTo ?? "Unassigned"}</div></div>;
-              })}
-            </div>
-          </section>
+          <FineLedgerPanel title={`Owner fine ledger · Σ ${formatKes(ownerFineTotal)}`} fines={mockFineLedger} />
         </div>
       </div>
     </main>
