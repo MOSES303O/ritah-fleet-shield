@@ -1,6 +1,7 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
 import Nav from "@/components/Nav";
+import FineLedgerPanel from "@/components/FineLedgerPanel";
 import { getSignups, clearSignups, type Signup } from "@/lib/signups";
 import {
   seedFleet,
@@ -9,7 +10,7 @@ import {
   type Vehicle,
   type Violation,
 } from "@/lib/mockFleet";
-import { Users, Car, AlertTriangle, Wallet, Trash2 } from "lucide-react";
+import { Users, Car, AlertTriangle, Wallet, Trash2, CheckCircle2, Plus } from "lucide-react";
 import { formatKes, mockFineLedger, mockHireContracts, rentalFleet } from "@/lib/rentalFlow";
 
 export const Route = createFileRoute("/admin")({
@@ -36,6 +37,7 @@ function AdminPage() {
   const [signups, setSignups] = useState<Signup[]>([]);
   const [fleet, setFleet] = useState<Vehicle[]>(() => seedFleet());
   const [violations, setViolations] = useState<Violation[]>([]);
+  const [ownerContracts, setOwnerContracts] = useState(mockHireContracts);
 
   useEffect(() => {
     const refresh = () => setSignups(getSignups());
@@ -64,6 +66,30 @@ function AdminPage() {
   const settled = violations.filter((v) => v.status === "AUTO-SETTLED");
   const totalSettled = settled.reduce((s, v) => s + v.amount, 0);
   const ownerFineTotal = mockFineLedger.reduce((sum, fine) => sum + fine.amount, 0);
+  const requestedContracts = ownerContracts.filter((contract) => contract.status === "REQUESTED");
+
+  const approveContract = (id: string) => {
+    setOwnerContracts((prev) => prev.map((contract) => (contract.id === id ? { ...contract, status: "APPROVED" } : contract)));
+  };
+
+  const createAdminContract = () => {
+    const car = rentalFleet.find((item) => item.ownerListed && item.available) ?? rentalFleet[0];
+    setOwnerContracts((prev) => [
+      {
+        id: `contract-admin-${prev.length + 1}`,
+        carId: car.id,
+        renter: "Walk-in renter",
+        renterEmail: "walkin.renter@example.co.ke",
+        renterPhone: "+254 711 000 321",
+        delegatedTo: "+254 711 000 321 · walkin.renter@example.co.ke",
+        stake: car.stake,
+        ratePerDay: car.ratePerDay,
+        status: "APPROVED",
+        createdAt: "Admin now",
+      },
+      ...prev,
+    ]);
+  };
 
   return (
     <main className="min-h-screen pb-24">

@@ -145,7 +145,7 @@ export default function RentalWorkflow() {
     addLedger("WITHDRAW", amount, "Renter withdrew unlocked funds");
   };
 
-  const buildContract = () => {
+  const requestContract = () => {
     if (!selectedCar || !walletReady) return;
     const contract: HireContract = {
       id: uid("contract"),
@@ -156,12 +156,16 @@ export default function RentalWorkflow() {
       delegatedTo: `${renterIdentity.phone} · ${renterIdentity.email}`,
       stake,
       ratePerDay: selectedCar.ratePerDay,
-      status: "ACTIVE",
+      status: "REQUESTED",
       createdAt: now(),
     };
     setContracts((prev) => [contract, ...prev]);
-    setCars((prev) => prev.map((car) => (car.id === selectedCar.id ? { ...car, available: false } : car)));
-    addLedger("STAKE LOCK", stake, `${selectedCar.reg} hire contract created`);
+    addLedger("STAKE LOCK", stake, `${selectedCar.reg} hire contract request submitted`);
+  };
+
+  const approveContract = (contract: HireContract) => {
+    setContracts((prev) => prev.map((item) => (item.id === contract.id ? { ...item, status: "ACTIVE" } : item)));
+    setCars((prev) => prev.map((car) => (car.id === contract.carId ? { ...car, available: false } : car)));
   };
 
   const simulateFine = () => {
@@ -310,8 +314,8 @@ export default function RentalWorkflow() {
                   {selectedRules.map((rule) => <div key={rule.id} className="rounded-lg border border-border bg-background/30 px-3 py-2 text-xs"><div className={rule.pass ? "text-[var(--lime)]" : "text-[var(--danger)]"}>{rule.label}</div><div className="text-muted-foreground">{rule.detail}</div></div>)}
                 </div>
 
-                <div className="mt-5 rounded-lg border border-[var(--neon)]/30 bg-[var(--neon)]/10 px-3 py-2 text-xs text-muted-foreground">Contract delegation after login: <span className="text-foreground">{renterIdentity.name}</span> · <span className="text-[var(--neon)]">{renterIdentity.phone}</span> · <span className="text-[var(--neon)]">{renterIdentity.email}</span></div>
-                <button onClick={buildContract} disabled={!walletReady} className="mt-3 w-full rounded-lg bg-[var(--lime)] text-[var(--accent-foreground)] py-3 text-sm font-bold disabled:opacity-40"><FileText className="inline h-4 w-4 mr-2" />Build hire contract record</button>
+                <div className="mt-5 rounded-lg border border-[var(--neon)]/30 bg-[var(--neon)]/10 px-3 py-2 text-xs text-muted-foreground">Contract request after login: <span className="text-foreground">{renterIdentity.name}</span> · <span className="text-[var(--neon)]">{renterIdentity.phone}</span> · <span className="text-[var(--neon)]">{renterIdentity.email}</span></div>
+                <button onClick={requestContract} disabled={!walletReady} className="mt-3 w-full rounded-lg bg-[var(--lime)] text-[var(--accent-foreground)] py-3 text-sm font-bold disabled:opacity-40"><FileText className="inline h-4 w-4 mr-2" />Request hire contract approval</button>
                 <div className="mt-4 flex items-center gap-2 text-sm">
                   {walletReady ? <><CheckCircle2 className="h-4 w-4 text-[var(--lime)]" /><span className="text-muted-foreground">Wallet can lock this stake before contract activation.</span></> : <span className="text-[var(--danger)]">Wallet balance is below the selected stake.</span>}
                 </div>
@@ -325,7 +329,7 @@ export default function RentalWorkflow() {
                   {contracts.length === 0 && <div className="text-sm text-muted-foreground">No hire contracts yet.</div>}
                   {contracts.map((contract) => {
                     const car = cars.find((item) => item.id === contract.carId);
-                    return <div key={contract.id} className="rounded-lg border border-border bg-background/30 p-3 text-xs"><div className="flex justify-between gap-2"><span className="font-mono text-[var(--neon)]">{car?.reg ?? "Deleted car"}</span><span className={contract.status === "ACTIVE" ? "text-[var(--lime)]" : "text-muted-foreground"}>{contract.status}</span></div><div className="mt-1 text-muted-foreground">{contract.renter} · stake {formatKes(contract.stake)} · {contract.createdAt}</div><div className="mt-1 text-[var(--lime)]">Delegated to {contract.delegatedTo}</div>{contract.status === "ACTIVE" && <button onClick={() => closeContract(contract)} className="mt-2 text-[var(--lime)]">Close contract and release car</button>}</div>;
+                    return <div key={contract.id} className="rounded-lg border border-border bg-background/30 p-3 text-xs"><div className="flex justify-between gap-2"><span className="font-mono text-[var(--neon)]">{car?.reg ?? "Deleted car"}</span><span className={contract.status === "ACTIVE" || contract.status === "APPROVED" ? "text-[var(--lime)]" : "text-muted-foreground"}>{contract.status}</span></div><div className="mt-1 text-muted-foreground">{contract.renter} · stake {formatKes(contract.stake)} · {contract.createdAt}</div><div className="mt-1 text-[var(--lime)]">Delegated to {contract.delegatedTo}</div>{contract.status === "REQUESTED" && <button onClick={() => approveContract(contract)} className="mt-2 text-[var(--lime)]">Owner approve request</button>}{contract.status === "ACTIVE" && <button onClick={() => closeContract(contract)} className="mt-2 text-[var(--lime)]">Close contract and release car</button>}</div>;
                   })}
                 </div>
               </div>
