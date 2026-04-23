@@ -6,6 +6,7 @@ import Features from "@/components/Features";
 import Dashboards from "@/components/Dashboards";
 import ContractFlow from "@/components/ContractFlow";
 import RentalWorkflow from "@/components/RentalWorkflow";
+import PublicContractPreviews from "@/components/PublicContractPreviews";
 import CTA from "@/components/CTA";
 
 export const Route = createFileRoute("/")({
@@ -36,6 +37,7 @@ function Index() {
       <WhyNow />
       <Features />
       <Dashboards />
+      <PublicContractPreviews />
       <RentalWorkflow />
       <ContractFlow />
       <CTA />

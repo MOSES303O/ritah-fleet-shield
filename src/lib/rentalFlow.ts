@@ -30,7 +30,7 @@ export type HireContract = {
   delegatedTo: string;
   stake: number;
   ratePerDay: number;
-  status: "ACTIVE" | "CLOSED";
+  status: "REQUESTED" | "APPROVED" | "ACTIVE" | "CLOSED";
   createdAt: string;
 };
 
@@ -173,7 +173,23 @@ export const mockFineLedger: NtsaFine[] = [
 export const mockHireContracts: HireContract[] = [
   { id: "contract-1", carId: "car-1", renter: customerWallet.holder, renterEmail: renterIdentity.email, renterPhone: renterIdentity.phone, delegatedTo: `${renterIdentity.phone} · ${renterIdentity.email}`, stake: 8500, ratePerDay: 4200, status: "ACTIVE", createdAt: "09:12" },
   { id: "contract-2", carId: "car-2", renter: customerWallet.holder, renterEmail: renterIdentity.email, renterPhone: renterIdentity.phone, delegatedTo: `${renterIdentity.phone} · ${renterIdentity.email}`, stake: 7000, ratePerDay: 3600, status: "CLOSED", createdAt: "Yesterday" },
+  { id: "contract-3", carId: "car-3", renter: customerWallet.holder, renterEmail: renterIdentity.email, renterPhone: renterIdentity.phone, delegatedTo: `${renterIdentity.phone} · ${renterIdentity.email}`, stake: 10000, ratePerDay: 6800, status: "APPROVED", createdAt: "Today" },
+  { id: "contract-4", carId: "car-2", renter: "Brian O.", renterEmail: "brian.otieno@example.co.ke", renterPhone: "+254 733 110 204", delegatedTo: "+254 733 110 204 · brian.otieno@example.co.ke", stake: 7000, ratePerDay: 3600, status: "REQUESTED", createdAt: "13:40" },
 ];
+
+export const publicContractPreviews: HireContract[] = [
+  ...mockHireContracts,
+  { id: "contract-5", carId: "car-1", renter: "Grace M.", renterEmail: "grace.muthoni@example.co.ke", renterPhone: "+254 700 884 117", delegatedTo: "+254 700 884 117 · grace.muthoni@example.co.ke", stake: 8500, ratePerDay: 4200, status: "APPROVED", createdAt: "11:20" },
+  { id: "contract-6", carId: "car-4", renter: "Kevin N.", renterEmail: "kevin.njoroge@example.co.ke", renterPhone: "+254 745 612 889", delegatedTo: "+254 745 612 889 · kevin.njoroge@example.co.ke", stake: 9000, ratePerDay: 5200, status: "REQUESTED", createdAt: "10:55" },
+  { id: "contract-7", carId: "car-3", renter: "Lydia A.", renterEmail: "lydia.achieng@example.co.ke", renterPhone: "+254 721 908 144", delegatedTo: "+254 721 908 144 · lydia.achieng@example.co.ke", stake: 10000, ratePerDay: 6800, status: "ACTIVE", createdAt: "08:45" },
+];
+
+export function getPublicContractPreviews(limit = 6) {
+  return [...publicContractPreviews]
+    .sort((a, b) => a.id.localeCompare(b.id))
+    .sort((a, b) => ((a.stake + a.ratePerDay) % 7) - ((b.stake + b.ratePerDay) % 7))
+    .slice(0, limit);
+}
 
 export function formatKes(amount: number) {
   return `KES ${amount.toLocaleString("en-KE")}`;
