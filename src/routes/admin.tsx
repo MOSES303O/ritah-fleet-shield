@@ -10,6 +10,7 @@ import {
   type Violation,
 } from "@/lib/mockFleet";
 import { Users, Car, AlertTriangle, Wallet, Trash2 } from "lucide-react";
+import { formatKes, mockFineLedger, mockHireContracts, rentalFleet } from "@/lib/rentalFlow";
 
 export const Route = createFileRoute("/admin")({
   head: () => ({
@@ -62,6 +63,7 @@ function AdminPage() {
   const totalEscrow = fleet.reduce((s, v) => s + v.stake, 0);
   const settled = violations.filter((v) => v.status === "AUTO-SETTLED");
   const totalSettled = settled.reduce((s, v) => s + v.amount, 0);
+  const ownerFineTotal = mockFineLedger.reduce((sum, fine) => sum + fine.amount, 0);
 
   return (
     <main className="min-h-screen pb-24">
@@ -239,6 +241,34 @@ function AdminPage() {
               </tbody>
             </table>
           </div>
+        </div>
+
+        <div className="mt-5 grid lg:grid-cols-2 gap-5">
+          <section className="glass rounded-2xl p-5">
+            <div className="mb-4 flex items-center justify-between gap-3">
+              <h2 className="text-sm font-semibold"><Car className="inline h-4 w-4 mr-2 text-[var(--neon)]" />Owner hire contracts</h2>
+              <span className="text-[11px] font-mono text-[var(--lime)]">ADMIN / OWNER REVIEW</span>
+            </div>
+            <div className="space-y-2">
+              {mockHireContracts.map((contract) => {
+                const car = rentalFleet.find((item) => item.id === contract.carId);
+                return <div key={contract.id} className="rounded-lg border border-border bg-background/30 p-3 text-xs"><div className="flex justify-between gap-3"><span className="font-mono text-[var(--neon)]">{car?.reg}</span><span className={contract.status === "ACTIVE" ? "text-[var(--lime)]" : "text-muted-foreground"}>{contract.status}</span></div><div className="mt-1 text-muted-foreground">{contract.renter} · {contract.delegatedTo}</div><div className="mt-1 text-foreground">Stake {formatKes(contract.stake)} · Rate {formatKes(contract.ratePerDay)}/day</div></div>;
+              })}
+            </div>
+          </section>
+
+          <section className="glass rounded-2xl p-5">
+            <div className="mb-4 flex items-center justify-between gap-3">
+              <h2 className="text-sm font-semibold"><AlertTriangle className="inline h-4 w-4 mr-2 text-[var(--danger)]" />Owner fine ledger</h2>
+              <span className="text-[11px] font-mono text-[var(--lime)]">Σ {formatKes(ownerFineTotal)}</span>
+            </div>
+            <div className="space-y-2">
+              {mockFineLedger.map((fine) => {
+                const contract = mockHireContracts.find((item) => item.id === fine.contractId);
+                return <div key={fine.id} className="rounded-lg border border-border bg-background/30 p-3 text-xs"><div className="flex justify-between gap-3"><span className="font-mono text-[var(--danger)]">{fine.reason}</span><span>{formatKes(fine.amount)}</span></div><div className="mt-1 text-muted-foreground">{fine.reg} · {fine.speed}/{fine.limit} km/h · {fine.status}</div><div className="mt-1 text-[var(--lime)]">Assigned renter: {contract?.delegatedTo ?? "Unassigned"}</div></div>;
+              })}
+            </div>
+          </section>
         </div>
       </div>
     </main>

@@ -1,5 +1,5 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
-import { AlertTriangle, CheckCircle2, FileText, Wallet } from "lucide-react";
+import { AlertTriangle, CheckCircle2, FileText, Mail, Phone, ShieldCheck, Wallet } from "lucide-react";
 import Nav from "@/components/Nav";
 import { formatKes, mockFineLedger, mockHireContracts, rentalFleet } from "@/lib/rentalFlow";
 
@@ -24,7 +24,7 @@ function ContractsPage() {
           <div>
             <div className="text-xs font-mono uppercase tracking-widest text-[var(--neon)] mb-2">Smart-contract records · mock data</div>
             <h1 className="text-4xl md:text-5xl font-bold">Hire contract page</h1>
-            <p className="mt-3 max-w-2xl text-muted-foreground">Each record ties a renter, vehicle, stake lock, availability rules, and NTSA fine deductions into one auditable flow.</p>
+            <p className="mt-3 max-w-2xl text-muted-foreground">Owner/admin-only mock records tie a renter, vehicle, stake lock, delegation contact, availability rules, and NTSA fine deductions into one auditable flow.</p>
           </div>
           <Link to="/user" className="rounded-full border border-[var(--lime)]/40 bg-[var(--lime)]/10 px-5 py-2.5 text-sm font-semibold text-[var(--lime)]">User ledger</Link>
         </div>
@@ -50,6 +50,12 @@ function ContractsPage() {
                   <Mini icon={<FileText className="h-4 w-4" />} label="Daily rate" value={formatKes(contract.ratePerDay)} />
                   <Mini icon={<CheckCircle2 className="h-4 w-4" />} label="Pickup hours" value={car?.allowedHours ?? "—"} />
                   <Mini icon={<AlertTriangle className="h-4 w-4" />} label="Fine total" value={formatKes(fineTotal)} />
+                </div>
+
+                <div className="mt-5 grid md:grid-cols-3 gap-3 rounded-xl border border-[var(--neon)]/30 bg-[var(--neon)]/10 p-4 text-xs">
+                  <div><div className="inline-flex items-center gap-2 font-mono text-[var(--neon)]"><ShieldCheck className="h-4 w-4" /> Delegated renter</div><div className="mt-1 text-foreground">{contract.renter}</div></div>
+                  <div><div className="inline-flex items-center gap-2 font-mono text-[var(--neon)]"><Phone className="h-4 w-4" /> Assigned number</div><div className="mt-1 text-foreground">{contract.renterPhone}</div></div>
+                  <div><div className="inline-flex items-center gap-2 font-mono text-[var(--neon)]"><Mail className="h-4 w-4" /> Assigned email</div><div className="mt-1 text-foreground">{contract.renterEmail}</div></div>
                 </div>
 
                 <div className="mt-5 grid lg:grid-cols-2 gap-4">
