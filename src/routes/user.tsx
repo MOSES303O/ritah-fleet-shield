@@ -1,7 +1,7 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { AlertTriangle, FileText, ShieldCheck, Wallet } from "lucide-react";
 import Nav from "@/components/Nav";
-import { customerWallet, formatKes, mockFineLedger, mockHireContracts, mockWalletHistory, rentalFleet } from "@/lib/rentalFlow";
+import { customerWallet, formatKes, mockFineLedger, mockHireContracts, mockWalletHistory, rentalFleet, renterIdentity } from "@/lib/rentalFlow";
 
 export const Route = createFileRoute("/user")({
   head: () => ({
@@ -27,7 +27,7 @@ function UserPage() {
           <div>
             <div className="text-xs font-mono uppercase tracking-widest text-[var(--lime)] mb-2">Logged-in renter · mock session</div>
             <h1 className="text-4xl md:text-5xl font-bold">User wallet and fine ledger</h1>
-            <p className="mt-3 max-w-2xl text-muted-foreground">A simulated renter account showing loaded wallet funds, locked stake, NTSA auto-deductions, and hire records.</p>
+            <p className="mt-3 max-w-2xl text-muted-foreground">A simulated logged-in renter account showing wallet funds, contract delegation by phone/email, NTSA auto-deductions, and hire records.</p>
           </div>
           <Link to="/contracts" className="rounded-full bg-[var(--neon)] text-[var(--primary-foreground)] px-5 py-2.5 text-sm font-semibold">Open contracts</Link>
         </div>
@@ -53,6 +53,7 @@ function UserPage() {
 
           <section className="glass rounded-2xl p-5">
             <h2 className="font-display text-xl font-bold mb-4"><AlertTriangle className="inline h-5 w-5 mr-2 text-[var(--danger)]" />User fine ledger</h2>
+            <div className="mb-3 rounded-lg border border-border bg-background/30 p-3 text-xs text-muted-foreground">Assigned contract identity: <span className="text-foreground">{renterIdentity.phone}</span> · <span className="text-foreground">{renterIdentity.email}</span></div>
             <div className="space-y-2">
               {mockFineLedger.map((fine) => (
                 <div key={fine.id} className="rounded-lg border border-border bg-background/30 p-3 text-xs">
@@ -69,7 +70,7 @@ function UserPage() {
           <div className="grid md:grid-cols-2 gap-3">
             {mockHireContracts.map((contract) => {
               const car = rentalFleet.find((item) => item.id === contract.carId);
-              return <div key={contract.id} className="rounded-xl border border-border bg-background/30 p-4"><div className="flex justify-between gap-3"><span className="font-mono text-[var(--neon)]">{car?.reg}</span><span className={contract.status === "ACTIVE" ? "text-[var(--lime)]" : "text-muted-foreground"}>{contract.status}</span></div><div className="mt-2 text-sm font-semibold">{car?.make} {car?.model}</div><div className="mt-1 text-xs text-muted-foreground">Stake {formatKes(contract.stake)} · Rate {formatKes(contract.ratePerDay)}/day · {contract.createdAt}</div></div>;
+              return <div key={contract.id} className="rounded-xl border border-border bg-background/30 p-4"><div className="flex justify-between gap-3"><span className="font-mono text-[var(--neon)]">{car?.reg}</span><span className={contract.status === "ACTIVE" ? "text-[var(--lime)]" : "text-muted-foreground"}>{contract.status}</span></div><div className="mt-2 text-sm font-semibold">{car?.make} {car?.model}</div><div className="mt-1 text-xs text-muted-foreground">Stake {formatKes(contract.stake)} · Rate {formatKes(contract.ratePerDay)}/day · {contract.createdAt}</div><div className="mt-2 text-xs text-[var(--lime)]">Delegated to {contract.delegatedTo}</div></div>;
             })}
           </div>
         </section>
