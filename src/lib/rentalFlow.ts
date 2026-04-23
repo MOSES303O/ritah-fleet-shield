@@ -25,6 +25,9 @@ export type HireContract = {
   id: string;
   carId: string;
   renter: string;
+  renterEmail: string;
+  renterPhone: string;
+  delegatedTo: string;
   stake: number;
   ratePerDay: number;
   status: "ACTIVE" | "CLOSED";
@@ -72,6 +75,13 @@ export const customerWallet: Wallet = {
   holder: "Amina W.",
   balance: 12500,
   verified: true,
+};
+
+export const renterIdentity = {
+  name: customerWallet.holder,
+  email: "amina.wanjiku@example.co.ke",
+  phone: "+254 712 448 920",
+  loggedIn: true,
 };
 
 export const rentalFleet: FleetCar[] = [
@@ -161,8 +171,8 @@ export const mockFineLedger: NtsaFine[] = [
 ];
 
 export const mockHireContracts: HireContract[] = [
-  { id: "contract-1", carId: "car-1", renter: customerWallet.holder, stake: 8500, ratePerDay: 4200, status: "ACTIVE", createdAt: "09:12" },
-  { id: "contract-2", carId: "car-2", renter: customerWallet.holder, stake: 7000, ratePerDay: 3600, status: "CLOSED", createdAt: "Yesterday" },
+  { id: "contract-1", carId: "car-1", renter: customerWallet.holder, renterEmail: renterIdentity.email, renterPhone: renterIdentity.phone, delegatedTo: `${renterIdentity.phone} · ${renterIdentity.email}`, stake: 8500, ratePerDay: 4200, status: "ACTIVE", createdAt: "09:12" },
+  { id: "contract-2", carId: "car-2", renter: customerWallet.holder, renterEmail: renterIdentity.email, renterPhone: renterIdentity.phone, delegatedTo: `${renterIdentity.phone} · ${renterIdentity.email}`, stake: 7000, ratePerDay: 3600, status: "CLOSED", createdAt: "Yesterday" },
 ];
 
 export function formatKes(amount: number) {
