@@ -10,7 +10,7 @@ import {
   type Vehicle,
   type Violation,
 } from "@/lib/mockFleet";
-import { Users, Car, AlertTriangle, Wallet, Trash2, CheckCircle2, Plus } from "lucide-react";
+import { Users, Car, AlertTriangle, Wallet, Trash2, CheckCircle2, Plus, FileText } from "lucide-react";
 import { formatKes, mockFineLedger, mockHireContracts, rentalFleet } from "@/lib/rentalFlow";
 
 export const Route = createFileRoute("/admin")({
@@ -135,7 +135,7 @@ function AdminPage() {
         <section className="mb-5 glass rounded-2xl p-5">
           <div className="mb-4 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
             <div>
-              <h2 className="text-sm font-semibold"><FileTextIcon />Admin-only hire contracts</h2>
+              <h2 className="text-sm font-semibold"><FileText className="mr-2 inline h-4 w-4 text-[var(--neon)]" />Admin-only hire contracts</h2>
               <p className="mt-1 text-xs text-muted-foreground">Owner creates contracts and approves renter requests tied to phone and email delegation.</p>
             </div>
             <button onClick={createAdminContract} className="rounded-lg bg-[var(--neon)] px-4 py-2 text-xs font-bold text-[var(--primary-foreground)]"><Plus className="mr-1 inline h-4 w-4" />Create contract</button>
