@@ -12,8 +12,9 @@ import {
   type Vehicle,
   type Violation,
 } from "@/lib/mockFleet";
-import { Users, Car, AlertTriangle, Wallet, Trash2, CheckCircle2, Plus, FileText, Pencil, X } from "lucide-react";
-import { formatKes, mockFineLedger, mockHireContracts, rentalFleet, type FleetCar } from "@/lib/rentalFlow";
+import { Users, Car, AlertTriangle, Wallet, Trash2, CheckCircle2, Plus, FileText, Pencil, X, Upload, Zap, Download } from "lucide-react";
+import { formatKes, mockFineLedger, mockHireContracts, ntsaFineCatalog, rentalFleet, type FleetCar, type HireContract, type NtsaFine } from "@/lib/rentalFlow";
+import { downloadContractPdf } from "@/lib/contractPdf";
 
 export const Route = createFileRoute("/admin")({
   head: () => ({
@@ -39,9 +40,15 @@ function AdminPage() {
   const [signups, setSignups] = useState<Signup[]>([]);
   const [fleet, setFleet] = useState<Vehicle[]>(() => seedFleet());
   const [violations, setViolations] = useState<Violation[]>([]);
-  const [ownerContracts, setOwnerContracts] = useState(mockHireContracts);
+  const [ownerContracts, setOwnerContracts] = useState<HireContract[]>(mockHireContracts);
   const [inventory, setInventory] = useState<FleetCar[]>(rentalFleet);
   const [editingCar, setEditingCar] = useState<FleetCar | null>(null);
+  const [bulkOpen, setBulkOpen] = useState(false);
+  const [bulkText, setBulkText] = useState("reg,make,model,seats,location,ratePerDay,stake\nKBX 100A,Toyota,Vitz,5,Lavington,3500,7000");
+  const [bulkMsg, setBulkMsg] = useState<string | null>(null);
+  const [adminFines, setAdminFines] = useState<NtsaFine[]>(mockFineLedger);
+  const [walletPool, setWalletPool] = useState(50000);
+  const [createForm, setCreateForm] = useState({ carId: rentalFleet[0]?.id ?? "", renter: "", phone: "", email: "" });
 
   const blankCar = (): FleetCar => ({
     id: `car-${Date.now()}`,
