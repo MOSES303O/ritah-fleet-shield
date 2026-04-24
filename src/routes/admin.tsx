@@ -182,8 +182,11 @@ function AdminPage() {
                     <div><div className="font-mono text-[var(--neon)]">{contract.id}</div><div className="mt-1 font-semibold">{car?.reg} · {car?.make} {car?.model}</div></div>
                     <span className={contract.status === "REQUESTED" ? "text-[var(--danger)]" : "text-[var(--lime)]"}>{contract.status}</span>
                   </div>
-                  <div className="mt-2 text-muted-foreground" suppressHydrationWarning>{contract.renter} · {contract.renterPhone} · {contract.renterEmail}</div>
+                  <div className="mt-2 text-muted-foreground">{contract.renter} · {contract.renterPhone} · {contract.renterEmail}</div>
                   <div className="mt-2 text-foreground">Stake {formatKes(contract.stake)} · Rate {formatKes(contract.ratePerDay)}/day</div>
+                  <div className="mt-3 rounded-lg border border-border/60 bg-background/40 p-3">
+                    <ContractTimeline status={contract.status} />
+                  </div>
                   {contract.status === "REQUESTED" && <button onClick={() => approveContract(contract.id)} className="mt-3 rounded-lg border border-[var(--lime)]/40 bg-[var(--lime)]/10 px-3 py-2 text-[11px] font-bold text-[var(--lime)]"><CheckCircle2 className="mr-1 inline h-4 w-4" />Approve request</button>}
                 </div>
               );
