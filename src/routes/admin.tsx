@@ -105,7 +105,7 @@ function AdminPage() {
   const totalEscrow = fleet.reduce((s, v) => s + v.stake, 0);
   const settled = violations.filter((v) => v.status === "AUTO-SETTLED");
   const totalSettled = settled.reduce((s, v) => s + v.amount, 0);
-  const ownerFineTotal = mockFineLedger.reduce((sum, fine) => sum + fine.amount, 0);
+  const ownerFineTotal = adminFines.reduce((sum, fine) => sum + fine.amount, 0);
   const requestedContracts = ownerContracts.filter((contract) => contract.status === "REQUESTED");
 
   const approveContract = (id: string) => {
@@ -562,12 +562,12 @@ function AdminPage() {
             <div className="space-y-2">
               {ownerContracts.map((contract) => {
                 const car = rentalFleet.find((item) => item.id === contract.carId);
-                return <div key={contract.id} className="rounded-lg border border-border bg-background/30 p-3 text-xs"><div className="flex justify-between gap-3"><span className="font-mono text-[var(--neon)]">{car?.reg}</span><span className={contract.status === "ACTIVE" ? "text-[var(--lime)]" : "text-muted-foreground"}>{contract.status}</span></div><div className="mt-1 text-muted-foreground">{contract.renter} · {contract.delegatedTo}</div><div className="mt-1 text-foreground">Stake {formatKes(contract.stake)} · Rate {formatKes(contract.ratePerDay)}/day</div></div>;
+                return <div key={contract.id} className="rounded-lg border border-border bg-background/30 p-3 text-xs"><div className="flex justify-between gap-3"><span className="font-mono text-[var(--neon)]">{car?.reg}</span><span className={contract.status === "ACTIVE" ? "text-[var(--lime)]" : "text-muted-foreground"}>{contract.status}</span></div><div className="mt-1 text-muted-foreground" suppressHydrationWarning>{contract.renter} · {contract.delegatedTo}</div><div className="mt-1 text-foreground">Stake {formatKes(contract.stake)} · Rate {formatKes(contract.ratePerDay)}/day</div></div>;
               })}
             </div>
           </section>
 
-          <FineLedgerPanel title={`Owner fine ledger · Σ ${formatKes(ownerFineTotal)}`} fines={mockFineLedger} />
+          <FineLedgerPanel title={`Owner fine ledger · Σ ${formatKes(ownerFineTotal)}`} fines={adminFines} />
         </div>
       </div>
     </main>
