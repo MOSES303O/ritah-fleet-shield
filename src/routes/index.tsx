@@ -7,6 +7,7 @@ import Dashboards from "@/components/Dashboards";
 import ContractFlow from "@/components/ContractFlow";
 import RentalWorkflow from "@/components/RentalWorkflow";
 import PublicContractPreviews from "@/components/PublicContractPreviews";
+import LandingSearch from "@/components/LandingSearch";
 import CTA from "@/components/CTA";
 
 export const Route = createFileRoute("/")({
@@ -34,6 +35,7 @@ function Index() {
     <main className="min-h-screen">
       <Nav />
       <Hero />
+      <LandingSearch />
       <WhyNow />
       <Features />
       <Dashboards />
