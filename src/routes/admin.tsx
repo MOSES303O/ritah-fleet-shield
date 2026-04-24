@@ -236,23 +236,48 @@ function AdminPage() {
               <h2 className="text-sm font-semibold"><FileText className="mr-2 inline h-4 w-4 text-[var(--neon)]" />Admin-only hire contracts</h2>
               <p className="mt-1 text-xs text-muted-foreground">Owner creates contracts and approves renter requests tied to phone and email delegation.</p>
             </div>
-            <button onClick={createAdminContract} className="rounded-lg bg-[var(--neon)] px-4 py-2 text-xs font-bold text-[var(--primary-foreground)]"><Plus className="mr-1 inline h-4 w-4" />Create contract</button>
+            <div className="text-[11px] font-mono text-muted-foreground">Wallet pool: <span className="text-[var(--lime)]">{formatKes(walletPool)}</span></div>
           </div>
+
+          {/* Hire contract creation form */}
+          <div className="mb-4 grid gap-2 rounded-xl border border-[var(--neon)]/30 bg-[var(--neon)]/5 p-4 text-xs sm:grid-cols-[1fr_1fr_1fr_1fr_auto]">
+            <label className="flex flex-col gap-1"><span className="text-[10px] font-mono uppercase tracking-widest text-muted-foreground">Vehicle</span>
+              <select value={createForm.carId} onChange={(e) => setCreateForm({ ...createForm, carId: e.target.value })} className="rounded-md border border-border bg-background/50 px-2 py-1.5">
+                {rentalFleet.map((c) => <option key={c.id} value={c.id}>{c.reg} · {c.make} {c.model}</option>)}
+              </select>
+            </label>
+            <label className="flex flex-col gap-1"><span className="text-[10px] font-mono uppercase tracking-widest text-muted-foreground">Renter name</span>
+              <input value={createForm.renter} onChange={(e) => setCreateForm({ ...createForm, renter: e.target.value })} className="rounded-md border border-border bg-background/50 px-2 py-1.5" />
+            </label>
+            <label className="flex flex-col gap-1"><span className="text-[10px] font-mono uppercase tracking-widest text-muted-foreground">Phone</span>
+              <input value={createForm.phone} onChange={(e) => setCreateForm({ ...createForm, phone: e.target.value })} className="rounded-md border border-border bg-background/50 px-2 py-1.5" />
+            </label>
+            <label className="flex flex-col gap-1"><span className="text-[10px] font-mono uppercase tracking-widest text-muted-foreground">Email</span>
+              <input type="email" value={createForm.email} onChange={(e) => setCreateForm({ ...createForm, email: e.target.value })} className="rounded-md border border-border bg-background/50 px-2 py-1.5" />
+            </label>
+            <button onClick={createAdminContract} className="self-end rounded-lg bg-[var(--neon)] px-4 py-2 text-xs font-bold text-[var(--primary-foreground)]"><Plus className="mr-1 inline h-4 w-4" />Create</button>
+          </div>
+
           <div className="grid gap-3 lg:grid-cols-2">
             {ownerContracts.map((contract) => {
               const car = rentalFleet.find((item) => item.id === contract.carId);
+              const fines = adminFines.filter((f) => f.contractId === contract.id);
               return (
                 <div key={contract.id} className="rounded-xl border border-border bg-background/30 p-4 text-xs">
                   <div className="flex items-start justify-between gap-3">
                     <div><div className="font-mono text-[var(--neon)]">{contract.id}</div><div className="mt-1 font-semibold">{car?.reg} · {car?.make} {car?.model}</div></div>
                     <span className={contract.status === "REQUESTED" ? "text-[var(--danger)]" : "text-[var(--lime)]"}>{contract.status}</span>
                   </div>
-                  <div className="mt-2 text-muted-foreground">{contract.renter} · {contract.renterPhone} · {contract.renterEmail}</div>
-                  <div className="mt-2 text-foreground">Stake {formatKes(contract.stake)} · Rate {formatKes(contract.ratePerDay)}/day</div>
+                  <div className="mt-2 text-muted-foreground" suppressHydrationWarning>{contract.renter} · {contract.renterPhone} · {contract.renterEmail}</div>
+                  <div className="mt-2 text-foreground">Stake {formatKes(contract.stake)} · Rate {formatKes(contract.ratePerDay)}/day · Fines {formatKes(fines.reduce((s, f) => s + f.amount, 0))}</div>
                   <div className="mt-3 rounded-lg border border-border/60 bg-background/40 p-3">
                     <ContractTimeline status={contract.status} />
                   </div>
-                  {contract.status === "REQUESTED" && <button onClick={() => approveContract(contract.id)} className="mt-3 rounded-lg border border-[var(--lime)]/40 bg-[var(--lime)]/10 px-3 py-2 text-[11px] font-bold text-[var(--lime)]"><CheckCircle2 className="mr-1 inline h-4 w-4" />Approve request</button>}
+                  <div className="mt-3 flex flex-wrap gap-2">
+                    {contract.status === "REQUESTED" && <button onClick={() => approveContract(contract.id)} className="rounded-lg border border-[var(--lime)]/40 bg-[var(--lime)]/10 px-3 py-2 text-[11px] font-bold text-[var(--lime)]"><CheckCircle2 className="mr-1 inline h-4 w-4" />Approve</button>}
+                    <button onClick={() => settleFineFor(contract)} className="rounded-lg border border-[var(--danger)]/40 bg-[var(--danger)]/10 px-3 py-2 text-[11px] font-bold text-[var(--danger)]"><Zap className="mr-1 inline h-4 w-4" />Simulate NTSA fine</button>
+                    <button onClick={() => downloadContractPdf(contract, car, fines)} className="rounded-lg border border-border px-3 py-2 text-[11px] font-bold hover:border-[var(--neon)]/50"><Download className="mr-1 inline h-4 w-4" />Agreement PDF</button>
+                  </div>
                 </div>
               );
             })}
