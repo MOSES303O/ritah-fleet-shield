@@ -326,24 +326,26 @@ function AdminPage() {
                 </button>
               )}
             </div>
-            <div className="space-y-1.5 max-h-96 overflow-y-auto">
-              {signups.length === 0 && (
-                <div className="text-xs font-mono text-muted-foreground py-8 text-center">
-                  No signups yet. Submit the form on the home page.
-                </div>
-              )}
-              {signups.map((s) => (
-                <div
-                  key={s.id}
-                  className="flex items-center justify-between rounded-md bg-black/30 px-3 py-2 border border-white/5 text-xs font-mono"
-                >
-                  <span>{s.email}</span>
-                  <span className="text-muted-foreground">
-                    {new Date(s.createdAt).toLocaleString()}
-                  </span>
-                </div>
-              ))}
-            </div>
+            <ClientOnly fallback={<div className="text-xs font-mono text-muted-foreground py-8 text-center">Loading signups…</div>}>
+              <div className="space-y-1.5 max-h-96 overflow-y-auto">
+                {signups.length === 0 && (
+                  <div className="text-xs font-mono text-muted-foreground py-8 text-center">
+                    No signups yet. Submit the form on the home page.
+                  </div>
+                )}
+                {signups.map((s) => (
+                  <div
+                    key={s.id}
+                    className="flex items-center justify-between rounded-md bg-black/30 px-3 py-2 border border-white/5 text-xs font-mono"
+                  >
+                    <span>{s.email}</span>
+                    <span className="text-muted-foreground">
+                      {new Date(s.createdAt).toLocaleString()}
+                    </span>
+                  </div>
+                ))}
+              </div>
+            </ClientOnly>
           </div>
 
           {/* Fleet table */}
