@@ -195,6 +195,117 @@ function AdminPage() {
           <div className="mt-3 text-xs text-muted-foreground">Pending owner approvals: <span className="text-foreground">{requestedContracts.length}</span></div>
         </section>
 
+        <section className="mb-5 glass rounded-2xl p-5">
+          <div className="mb-4 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+            <div>
+              <h2 className="text-sm font-semibold"><Car className="mr-2 inline h-4 w-4 text-[var(--lime)]" />Admin car inventory</h2>
+              <p className="mt-1 text-xs text-muted-foreground">Add, edit, list/unlist, or remove fleet vehicles. Listed vehicles surface in the public rental workflow.</p>
+            </div>
+            <button onClick={() => setEditingCar(blankCar())} className="rounded-lg bg-[var(--lime)] px-4 py-2 text-xs font-bold text-[var(--accent-foreground)]"><Plus className="mr-1 inline h-4 w-4" />Add vehicle</button>
+          </div>
+
+          {editingCar && (
+            <div className="mb-4 rounded-xl border border-[var(--lime)]/40 bg-[var(--lime)]/5 p-4">
+              <div className="mb-3 flex items-center justify-between">
+                <div className="text-xs font-mono uppercase tracking-widest text-[var(--lime)]">{inventory.some((c) => c.id === editingCar.id) ? "Edit vehicle" : "New vehicle"}</div>
+                <button onClick={() => setEditingCar(null)} className="text-muted-foreground hover:text-foreground"><X className="h-4 w-4" /></button>
+              </div>
+              <div className="grid gap-2 sm:grid-cols-2 lg:grid-cols-3 text-xs">
+                {([
+                  ["reg", "Plate"],
+                  ["make", "Make"],
+                  ["model", "Model"],
+                  ["location", "Location"],
+                  ["allowedHours", "Allowed hours"],
+                ] as const).map(([key, label]) => (
+                  <label key={key} className="flex flex-col gap-1">
+                    <span className="text-[10px] font-mono uppercase tracking-widest text-muted-foreground">{label}</span>
+                    <input
+                      value={editingCar[key] as string}
+                      onChange={(e) => setEditingCar({ ...editingCar, [key]: e.target.value })}
+                      className="rounded-md border border-border bg-background/50 px-2 py-1.5 text-foreground"
+                    />
+                  </label>
+                ))}
+                {([
+                  ["seats", "Seats"],
+                  ["ratePerDay", "Rate / day"],
+                  ["stake", "Stake (5000–10000)"],
+                  ["speedLimit", "Speed limit"],
+                  ["maxHireDays", "Max hire days"],
+                  ["requiresWalletMinimum", "Wallet minimum"],
+                ] as const).map(([key, label]) => (
+                  <label key={key} className="flex flex-col gap-1">
+                    <span className="text-[10px] font-mono uppercase tracking-widest text-muted-foreground">{label}</span>
+                    <input
+                      type="number"
+                      value={editingCar[key] as number}
+                      onChange={(e) => setEditingCar({ ...editingCar, [key]: Number(e.target.value) })}
+                      className="rounded-md border border-border bg-background/50 px-2 py-1.5 text-foreground"
+                    />
+                  </label>
+                ))}
+              </div>
+              <div className="mt-3 flex flex-wrap items-center gap-3 text-xs">
+                <label className="inline-flex items-center gap-2"><input type="checkbox" checked={editingCar.ownerListed} onChange={(e) => setEditingCar({ ...editingCar, ownerListed: e.target.checked })} />Listed publicly</label>
+                <label className="inline-flex items-center gap-2"><input type="checkbox" checked={editingCar.available} onChange={(e) => setEditingCar({ ...editingCar, available: e.target.checked })} />Available now</label>
+                <button
+                  onClick={() => {
+                    const stake = Math.max(5000, Math.min(10000, editingCar.stake));
+                    if (!editingCar.reg.trim() || !editingCar.make.trim()) return;
+                    upsertCar({ ...editingCar, stake });
+                  }}
+                  className="ml-auto rounded-lg bg-[var(--neon)] px-4 py-2 text-xs font-bold text-[var(--primary-foreground)]"
+                >
+                  Save vehicle
+                </button>
+              </div>
+            </div>
+          )}
+
+          <div className="overflow-x-auto">
+            <table className="w-full text-xs">
+              <thead className="text-[10px] font-mono uppercase tracking-widest text-muted-foreground">
+                <tr className="text-left">
+                  <th className="py-2 pr-3">Plate</th>
+                  <th className="py-2 pr-3">Vehicle</th>
+                  <th className="py-2 pr-3">Location</th>
+                  <th className="py-2 pr-3 text-right">Rate</th>
+                  <th className="py-2 pr-3 text-right">Stake</th>
+                  <th className="py-2 pr-3">Status</th>
+                  <th className="py-2 text-right">Actions</th>
+                </tr>
+              </thead>
+              <tbody>
+                {inventory.map((car) => (
+                  <tr key={car.id} className="border-t border-white/5">
+                    <td className="py-2 pr-3 font-mono text-[var(--neon)]">{car.reg}</td>
+                    <td className="py-2 pr-3">{car.make} {car.model} · {car.seats} seats</td>
+                    <td className="py-2 pr-3 text-muted-foreground">{car.location}</td>
+                    <td className="py-2 pr-3 text-right">{formatKes(car.ratePerDay)}</td>
+                    <td className="py-2 pr-3 text-right text-[var(--lime)]">{formatKes(car.stake)}</td>
+                    <td className="py-2 pr-3">
+                      <span className={car.ownerListed ? "text-[var(--lime)]" : "text-muted-foreground"}>{car.ownerListed ? "LISTED" : "HIDDEN"}</span>
+                      {" · "}
+                      <span className={car.available ? "text-foreground" : "text-[var(--danger)]"}>{car.available ? "FREE" : "HIRED"}</span>
+                    </td>
+                    <td className="py-2 text-right">
+                      <div className="inline-flex gap-1">
+                        <button onClick={() => toggleListed(car.id)} className="rounded border border-border px-2 py-1 text-[10px] hover:border-[var(--lime)]/50">{car.ownerListed ? "Unlist" : "List"}</button>
+                        <button onClick={() => setEditingCar(car)} className="rounded border border-border px-2 py-1 text-[10px] hover:border-[var(--neon)]/50"><Pencil className="inline h-3 w-3" /></button>
+                        <button onClick={() => removeCar(car.id)} className="rounded border border-border px-2 py-1 text-[10px] hover:border-[var(--danger)]/50"><Trash2 className="inline h-3 w-3" /></button>
+                      </div>
+                    </td>
+                  </tr>
+                ))}
+                {inventory.length === 0 && (
+                  <tr><td colSpan={7} className="py-6 text-center text-muted-foreground">No vehicles in inventory.</td></tr>
+                )}
+              </tbody>
+            </table>
+          </div>
+        </section>
+
         <div className="grid lg:grid-cols-2 gap-5">
           {/* Signups */}
           <div className="glass rounded-2xl p-5">
