@@ -2,7 +2,8 @@ import { createFileRoute, Link } from "@tanstack/react-router";
 import { AlertTriangle, FileText, ShieldCheck, Wallet } from "lucide-react";
 import Nav from "@/components/Nav";
 import FineLedgerPanel from "@/components/FineLedgerPanel";
-import { customerWallet, formatKes, mockFineLedger, mockHireContracts, mockWalletHistory, rentalFleet, renterIdentity } from "@/lib/rentalFlow";
+import ContractTimeline from "@/components/ContractTimeline";
+import { customerWallet, formatKes, mockFineLedger, mockHireContracts, mockWalletHistory, rentalFleet } from "@/lib/rentalFlow";
 
 export const Route = createFileRoute("/user")({
   head: () => ({
@@ -60,7 +61,7 @@ function UserPage() {
           <div className="grid md:grid-cols-2 gap-3">
             {mockHireContracts.map((contract) => {
               const car = rentalFleet.find((item) => item.id === contract.carId);
-              return <div key={contract.id} className="rounded-xl border border-border bg-background/30 p-4"><div className="flex justify-between gap-3"><span className="font-mono text-[var(--neon)]">{car?.reg}</span><span className={contract.status === "ACTIVE" || contract.status === "APPROVED" ? "text-[var(--lime)]" : "text-muted-foreground"}>{contract.status}</span></div><div className="mt-2 text-sm font-semibold">{car?.make} {car?.model}</div><div className="mt-1 text-xs text-muted-foreground">Stake {formatKes(contract.stake)} · Rate {formatKes(contract.ratePerDay)}/day · {contract.createdAt}</div><div className="mt-2 text-xs text-[var(--lime)]" suppressHydrationWarning>Available to engage: {contract.renterPhone} · {contract.renterEmail}</div>{contract.status === "APPROVED" && <button className="mt-3 rounded-lg bg-[var(--lime)] px-3 py-2 text-xs font-bold text-[var(--accent-foreground)]">Engage approved contract</button>}</div>;
+              return <div key={contract.id} className="rounded-xl border border-border bg-background/30 p-4"><div className="flex justify-between gap-3"><span className="font-mono text-[var(--neon)]">{car?.reg}</span><span className={contract.status === "ACTIVE" || contract.status === "APPROVED" ? "text-[var(--lime)]" : "text-muted-foreground"}>{contract.status}</span></div><div className="mt-2 text-sm font-semibold">{car?.make} {car?.model}</div><div className="mt-1 text-xs text-muted-foreground">Stake {formatKes(contract.stake)} · Rate {formatKes(contract.ratePerDay)}/day · {contract.createdAt}</div><div className="mt-2 text-xs text-[var(--lime)]">Available to engage: {contract.renterPhone} · {contract.renterEmail}</div><div className="mt-3 rounded-lg border border-border/60 bg-background/40 p-3"><ContractTimeline status={contract.status} /></div>{contract.status === "APPROVED" && <button className="mt-3 rounded-lg bg-[var(--lime)] px-3 py-2 text-xs font-bold text-[var(--accent-foreground)]">Engage approved contract</button>}</div>;
             })}
           </div>
         </section>

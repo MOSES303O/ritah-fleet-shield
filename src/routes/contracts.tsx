@@ -1,6 +1,7 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { AlertTriangle, CheckCircle2, FileText, Mail, Phone, ShieldCheck, Wallet } from "lucide-react";
 import Nav from "@/components/Nav";
+import ContractTimeline from "@/components/ContractTimeline";
 import { formatKes, mockFineLedger, mockHireContracts, rentalFleet } from "@/lib/rentalFlow";
 
 export const Route = createFileRoute("/contracts")({
@@ -56,6 +57,11 @@ function ContractsPage() {
                   <div><div className="inline-flex items-center gap-2 font-mono text-[var(--neon)]"><ShieldCheck className="h-4 w-4" /> Delegated renter</div><div className="mt-1 text-foreground">{contract.renter}</div></div>
                   <div><div className="inline-flex items-center gap-2 font-mono text-[var(--neon)]"><Phone className="h-4 w-4" /> Assigned number</div><div className="mt-1 text-foreground">{contract.renterPhone}</div></div>
                   <div><div className="inline-flex items-center gap-2 font-mono text-[var(--neon)]"><Mail className="h-4 w-4" /> Assigned email</div><div className="mt-1 text-foreground">{contract.renterEmail}</div></div>
+                </div>
+
+                <div className="mt-5 rounded-xl border border-border bg-background/30 p-4">
+                  <div className="mb-3 text-[11px] font-mono uppercase tracking-widest text-[var(--lime)]">Contract state timeline</div>
+                  <ContractTimeline status={contract.status} />
                 </div>
 
                 <div className="mt-5 grid lg:grid-cols-2 gap-4">

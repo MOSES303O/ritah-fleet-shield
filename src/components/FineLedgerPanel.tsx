@@ -1,5 +1,5 @@
 import { useMemo, useState } from "react";
-import { AlertTriangle, SlidersHorizontal } from "lucide-react";
+import { AlertTriangle, Download, SlidersHorizontal } from "lucide-react";
 import {
   Drawer,
   DrawerContent,
@@ -19,6 +19,25 @@ export default function FineLedgerPanel({ title, fines }: { title: string; fines
     [filter, fines],
   );
   const total = filteredFines.reduce((sum, fine) => sum + fine.amount, 0);
+
+  const exportCsv = () => {
+    const headers = ["id", "contractId", "reg", "reason", "speed", "limit", "amount", "status", "createdAt"];
+    const rows = filteredFines.map((f) =>
+      [f.id, f.contractId, f.reg, f.reason, f.speed, f.limit, f.amount, f.status, f.createdAt]
+        .map((v) => `"${String(v).replace(/"/g, '""')}"`)
+        .join(","),
+    );
+    const csv = [headers.join(","), ...rows].join("\n");
+    const blob = new Blob([csv], { type: "text/csv;charset=utf-8;" });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = `ritah-fine-ledger-${filter.toLowerCase().replace(/\s+/g, "-")}.csv`;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    URL.revokeObjectURL(url);
+  };
 
   return (
     <section className="glass rounded-2xl p-5">
@@ -45,8 +64,17 @@ export default function FineLedgerPanel({ title, fines }: { title: string; fines
         </div>
       </div>
 
-      <div className="mb-3 rounded-lg border border-border bg-background/30 p-3 text-xs text-muted-foreground">
-        Filtered total: <span className="text-foreground">{formatKes(total)}</span>
+      <div className="mb-3 flex items-center justify-between gap-3 rounded-lg border border-border bg-background/30 p-3 text-xs text-muted-foreground">
+        <span>
+          Filtered total: <span className="text-foreground">{formatKes(total)}</span> · {filteredFines.length} record(s)
+        </span>
+        <button
+          onClick={exportCsv}
+          disabled={filteredFines.length === 0}
+          className="inline-flex items-center gap-1.5 rounded-full border border-[var(--neon)]/40 bg-[var(--neon)]/10 px-3 py-1 text-[11px] font-mono text-[var(--neon)] transition hover:bg-[var(--neon)]/20 disabled:cursor-not-allowed disabled:opacity-40"
+        >
+          <Download className="h-3 w-3" /> Export CSV
+        </button>
       </div>
 
       <div className="space-y-2">
