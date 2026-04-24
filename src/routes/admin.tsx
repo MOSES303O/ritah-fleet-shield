@@ -2,6 +2,8 @@ import { createFileRoute } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
 import Nav from "@/components/Nav";
 import FineLedgerPanel from "@/components/FineLedgerPanel";
+import ClientOnly from "@/components/ClientOnly";
+import ContractTimeline from "@/components/ContractTimeline";
 import { getSignups, clearSignups, type Signup } from "@/lib/signups";
 import {
   seedFleet,
@@ -10,8 +12,8 @@ import {
   type Vehicle,
   type Violation,
 } from "@/lib/mockFleet";
-import { Users, Car, AlertTriangle, Wallet, Trash2, CheckCircle2, Plus, FileText } from "lucide-react";
-import { formatKes, mockFineLedger, mockHireContracts, rentalFleet } from "@/lib/rentalFlow";
+import { Users, Car, AlertTriangle, Wallet, Trash2, CheckCircle2, Plus, FileText, Pencil, X } from "lucide-react";
+import { formatKes, mockFineLedger, mockHireContracts, rentalFleet, type FleetCar } from "@/lib/rentalFlow";
 
 export const Route = createFileRoute("/admin")({
   head: () => ({
@@ -38,6 +40,37 @@ function AdminPage() {
   const [fleet, setFleet] = useState<Vehicle[]>(() => seedFleet());
   const [violations, setViolations] = useState<Violation[]>([]);
   const [ownerContracts, setOwnerContracts] = useState(mockHireContracts);
+  const [inventory, setInventory] = useState<FleetCar[]>(rentalFleet);
+  const [editingCar, setEditingCar] = useState<FleetCar | null>(null);
+
+  const blankCar = (): FleetCar => ({
+    id: `car-${Date.now()}`,
+    reg: "",
+    make: "",
+    model: "",
+    seats: 5,
+    location: "Nairobi",
+    ratePerDay: 4000,
+    stake: 7500,
+    speedLimit: 80,
+    allowedHours: "06:00–22:00",
+    maxHireDays: 7,
+    requiresWalletMinimum: 8000,
+    available: true,
+    ownerListed: true,
+  });
+
+  const upsertCar = (car: FleetCar) => {
+    setInventory((prev) => {
+      const exists = prev.some((c) => c.id === car.id);
+      return exists ? prev.map((c) => (c.id === car.id ? car : c)) : [car, ...prev];
+    });
+    setEditingCar(null);
+  };
+
+  const removeCar = (id: string) => setInventory((prev) => prev.filter((c) => c.id !== id));
+  const toggleListed = (id: string) =>
+    setInventory((prev) => prev.map((c) => (c.id === id ? { ...c, ownerListed: !c.ownerListed } : c)));
 
   useEffect(() => {
     const refresh = () => setSignups(getSignups());
