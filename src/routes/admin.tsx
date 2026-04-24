@@ -291,8 +291,26 @@ function AdminPage() {
               <h2 className="text-sm font-semibold"><Car className="mr-2 inline h-4 w-4 text-[var(--lime)]" />Admin car inventory</h2>
               <p className="mt-1 text-xs text-muted-foreground">Add, edit, list/unlist, or remove fleet vehicles. Listed vehicles surface in the public rental workflow.</p>
             </div>
-            <button onClick={() => setEditingCar(blankCar())} className="rounded-lg bg-[var(--lime)] px-4 py-2 text-xs font-bold text-[var(--accent-foreground)]"><Plus className="mr-1 inline h-4 w-4" />Add vehicle</button>
+            <div className="flex flex-wrap gap-2">
+              <button onClick={() => setBulkOpen((v) => !v)} className="rounded-lg border border-[var(--neon)]/40 bg-[var(--neon)]/10 px-4 py-2 text-xs font-bold text-[var(--neon)]"><Upload className="mr-1 inline h-4 w-4" />Bulk import</button>
+              <button onClick={() => setEditingCar(blankCar())} className="rounded-lg bg-[var(--lime)] px-4 py-2 text-xs font-bold text-[var(--accent-foreground)]"><Plus className="mr-1 inline h-4 w-4" />Add vehicle</button>
+            </div>
           </div>
+
+          {bulkOpen && (
+            <div className="mb-4 rounded-xl border border-[var(--neon)]/40 bg-[var(--neon)]/5 p-4">
+              <div className="mb-2 flex items-center justify-between">
+                <div className="text-xs font-mono uppercase tracking-widest text-[var(--neon)]">CSV bulk import</div>
+                <button onClick={() => setBulkOpen(false)} className="text-muted-foreground hover:text-foreground"><X className="h-4 w-4" /></button>
+              </div>
+              <p className="mb-2 text-[11px] text-muted-foreground">Headers required: reg, make, model, seats, location, ratePerDay, stake.</p>
+              <textarea value={bulkText} onChange={(e) => setBulkText(e.target.value)} rows={6} className="w-full rounded-md border border-border bg-background/50 p-2 font-mono text-[11px] text-foreground" />
+              <div className="mt-2 flex flex-wrap items-center gap-3">
+                <button onClick={bulkImport} className="rounded-lg bg-[var(--neon)] px-4 py-2 text-xs font-bold text-[var(--primary-foreground)]">Import rows</button>
+                {bulkMsg && <span className="text-xs text-[var(--lime)]">{bulkMsg}</span>}
+              </div>
+            </div>
+          )}
 
           {editingCar && (
             <div className="mb-4 rounded-xl border border-[var(--lime)]/40 bg-[var(--lime)]/5 p-4">
