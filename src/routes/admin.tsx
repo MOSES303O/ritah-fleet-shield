@@ -113,22 +113,80 @@ function AdminPage() {
   };
 
   const createAdminContract = () => {
-    const car = rentalFleet.find((item) => item.ownerListed && item.available) ?? rentalFleet[0];
-    setOwnerContracts((prev) => [
-      {
-        id: `contract-admin-${prev.length + 1}`,
-        carId: car.id,
-        renter: "Walk-in renter",
-        renterEmail: "walkin.renter@example.co.ke",
-        renterPhone: "+254 711 000 321",
-        delegatedTo: "+254 711 000 321 · walkin.renter@example.co.ke",
-        stake: car.stake,
-        ratePerDay: car.ratePerDay,
-        status: "APPROVED",
-        createdAt: "Admin now",
-      },
-      ...prev,
-    ]);
+    const car = rentalFleet.find((item) => item.id === createForm.carId) ?? rentalFleet[0];
+    if (!car || !createForm.renter.trim() || !createForm.phone.trim() || !createForm.email.trim()) return;
+    const contract: HireContract = {
+      id: `contract-admin-${Date.now()}`,
+      carId: car.id,
+      renter: createForm.renter,
+      renterEmail: createForm.email,
+      renterPhone: createForm.phone,
+      delegatedTo: `${createForm.phone} · ${createForm.email}`,
+      stake: car.stake,
+      ratePerDay: car.ratePerDay,
+      status: "APPROVED",
+      createdAt: "Admin now",
+    };
+    setOwnerContracts((prev) => [contract, ...prev]);
+    setCreateForm({ carId: car.id, renter: "", phone: "", email: "" });
+  };
+
+  const bulkImport = () => {
+    setBulkMsg(null);
+    const lines = bulkText.trim().split(/\r?\n/).filter(Boolean);
+    if (lines.length < 2) return setBulkMsg("Provide a header row and at least one data row.");
+    const headers = lines[0].split(",").map((h) => h.trim());
+    const required = ["reg", "make", "model", "seats", "location", "ratePerDay", "stake"];
+    if (!required.every((r) => headers.includes(r))) return setBulkMsg(`Missing columns. Required: ${required.join(", ")}`);
+    let added = 0;
+    const newCars: FleetCar[] = [];
+    for (const row of lines.slice(1)) {
+      const cells = row.split(",").map((c) => c.trim());
+      const obj: Record<string, string> = {};
+      headers.forEach((h, i) => (obj[h] = cells[i] ?? ""));
+      if (!obj.reg || !obj.make) continue;
+      const stake = Math.max(5000, Math.min(10000, Number(obj.stake) || 7000));
+      newCars.push({
+        id: `car-imp-${Date.now()}-${added}`,
+        reg: obj.reg.toUpperCase(),
+        make: obj.make,
+        model: obj.model,
+        seats: Number(obj.seats) || 5,
+        location: obj.location || "Nairobi",
+        ratePerDay: Number(obj.ratePerDay) || 4000,
+        stake,
+        speedLimit: 80,
+        allowedHours: "06:00–22:00",
+        maxHireDays: 7,
+        requiresWalletMinimum: stake + 1000,
+        available: true,
+        ownerListed: true,
+      });
+      added++;
+    }
+    if (!added) return setBulkMsg("No valid rows found.");
+    setInventory((prev) => [...newCars, ...prev]);
+    setBulkMsg(`Imported ${added} vehicle${added === 1 ? "" : "s"}.`);
+  };
+
+  const settleFineFor = (contract: HireContract) => {
+    const car = rentalFleet.find((c) => c.id === contract.carId);
+    if (!car) return;
+    const cat = ntsaFineCatalog[Math.floor(Math.random() * ntsaFineCatalog.length)];
+    const canDeduct = walletPool >= cat.amount;
+    const fine: NtsaFine = {
+      id: `fine-sim-${Date.now()}`,
+      contractId: contract.id,
+      reg: car.reg,
+      reason: cat.reason,
+      speed: Math.max(cat.speed, car.speedLimit + 10),
+      limit: car.speedLimit,
+      amount: cat.amount,
+      status: canDeduct ? "AUTO-DEDUCTED" : "INSUFFICIENT WALLET",
+      createdAt: new Date().toLocaleTimeString("en-KE", { hour: "2-digit", minute: "2-digit" }),
+    };
+    setAdminFines((prev) => [fine, ...prev]);
+    if (canDeduct) setWalletPool((prev) => prev - cat.amount);
   };
 
   return (
