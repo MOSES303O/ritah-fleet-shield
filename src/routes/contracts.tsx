@@ -1,8 +1,9 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
-import { AlertTriangle, CheckCircle2, FileText, Mail, Phone, ShieldCheck, Wallet } from "lucide-react";
+import { AlertTriangle, CheckCircle2, Download, FileText, Mail, Phone, ShieldCheck, Wallet } from "lucide-react";
 import Nav from "@/components/Nav";
 import ContractTimeline from "@/components/ContractTimeline";
 import { formatKes, mockFineLedger, mockHireContracts, rentalFleet } from "@/lib/rentalFlow";
+import { downloadContractPdf } from "@/lib/contractPdf";
 
 export const Route = createFileRoute("/contracts")({
   head: () => ({
@@ -43,7 +44,10 @@ function ContractsPage() {
                     <h2 className="mt-1 text-2xl font-display font-bold">{car?.make} {car?.model} · {car?.reg}</h2>
                     <p className="mt-1 text-sm text-muted-foreground">Renter {contract.renter} · created {contract.createdAt}</p>
                   </div>
-                  <span className={contract.status === "ACTIVE" ? "rounded-full bg-[var(--lime)]/10 border border-[var(--lime)]/40 px-4 py-2 text-xs font-mono text-[var(--lime)]" : "rounded-full border border-border px-4 py-2 text-xs font-mono text-muted-foreground"}>{contract.status}</span>
+                  <div className="flex items-center gap-2">
+                    <span className={contract.status === "ACTIVE" ? "rounded-full bg-[var(--lime)]/10 border border-[var(--lime)]/40 px-4 py-2 text-xs font-mono text-[var(--lime)]" : "rounded-full border border-border px-4 py-2 text-xs font-mono text-muted-foreground"}>{contract.status}</span>
+                    <button onClick={() => downloadContractPdf(contract, car, fines)} className="inline-flex items-center gap-1.5 rounded-full border border-[var(--neon)]/40 bg-[var(--neon)]/10 px-3 py-2 text-xs font-mono text-[var(--neon)] hover:bg-[var(--neon)]/20"><Download className="h-3 w-3" />PDF</button>
+                  </div>
                 </div>
 
                 <div className="mt-5 grid md:grid-cols-4 gap-3">

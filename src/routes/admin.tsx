@@ -12,8 +12,9 @@ import {
   type Vehicle,
   type Violation,
 } from "@/lib/mockFleet";
-import { Users, Car, AlertTriangle, Wallet, Trash2, CheckCircle2, Plus, FileText, Pencil, X } from "lucide-react";
-import { formatKes, mockFineLedger, mockHireContracts, rentalFleet, type FleetCar } from "@/lib/rentalFlow";
+import { Users, Car, AlertTriangle, Wallet, Trash2, CheckCircle2, Plus, FileText, Pencil, X, Upload, Zap, Download } from "lucide-react";
+import { formatKes, mockFineLedger, mockHireContracts, ntsaFineCatalog, rentalFleet, type FleetCar, type HireContract, type NtsaFine } from "@/lib/rentalFlow";
+import { downloadContractPdf } from "@/lib/contractPdf";
 
 export const Route = createFileRoute("/admin")({
   head: () => ({
@@ -39,9 +40,15 @@ function AdminPage() {
   const [signups, setSignups] = useState<Signup[]>([]);
   const [fleet, setFleet] = useState<Vehicle[]>(() => seedFleet());
   const [violations, setViolations] = useState<Violation[]>([]);
-  const [ownerContracts, setOwnerContracts] = useState(mockHireContracts);
+  const [ownerContracts, setOwnerContracts] = useState<HireContract[]>(mockHireContracts);
   const [inventory, setInventory] = useState<FleetCar[]>(rentalFleet);
   const [editingCar, setEditingCar] = useState<FleetCar | null>(null);
+  const [bulkOpen, setBulkOpen] = useState(false);
+  const [bulkText, setBulkText] = useState("reg,make,model,seats,location,ratePerDay,stake\nKBX 100A,Toyota,Vitz,5,Lavington,3500,7000");
+  const [bulkMsg, setBulkMsg] = useState<string | null>(null);
+  const [adminFines, setAdminFines] = useState<NtsaFine[]>(mockFineLedger);
+  const [walletPool, setWalletPool] = useState(50000);
+  const [createForm, setCreateForm] = useState({ carId: rentalFleet[0]?.id ?? "", renter: "", phone: "", email: "" });
 
   const blankCar = (): FleetCar => ({
     id: `car-${Date.now()}`,
@@ -98,7 +105,7 @@ function AdminPage() {
   const totalEscrow = fleet.reduce((s, v) => s + v.stake, 0);
   const settled = violations.filter((v) => v.status === "AUTO-SETTLED");
   const totalSettled = settled.reduce((s, v) => s + v.amount, 0);
-  const ownerFineTotal = mockFineLedger.reduce((sum, fine) => sum + fine.amount, 0);
+  const ownerFineTotal = adminFines.reduce((sum, fine) => sum + fine.amount, 0);
   const requestedContracts = ownerContracts.filter((contract) => contract.status === "REQUESTED");
 
   const approveContract = (id: string) => {
@@ -106,22 +113,80 @@ function AdminPage() {
   };
 
   const createAdminContract = () => {
-    const car = rentalFleet.find((item) => item.ownerListed && item.available) ?? rentalFleet[0];
-    setOwnerContracts((prev) => [
-      {
-        id: `contract-admin-${prev.length + 1}`,
-        carId: car.id,
-        renter: "Walk-in renter",
-        renterEmail: "walkin.renter@example.co.ke",
-        renterPhone: "+254 711 000 321",
-        delegatedTo: "+254 711 000 321 · walkin.renter@example.co.ke",
-        stake: car.stake,
-        ratePerDay: car.ratePerDay,
-        status: "APPROVED",
-        createdAt: "Admin now",
-      },
-      ...prev,
-    ]);
+    const car = rentalFleet.find((item) => item.id === createForm.carId) ?? rentalFleet[0];
+    if (!car || !createForm.renter.trim() || !createForm.phone.trim() || !createForm.email.trim()) return;
+    const contract: HireContract = {
+      id: `contract-admin-${Date.now()}`,
+      carId: car.id,
+      renter: createForm.renter,
+      renterEmail: createForm.email,
+      renterPhone: createForm.phone,
+      delegatedTo: `${createForm.phone} · ${createForm.email}`,
+      stake: car.stake,
+      ratePerDay: car.ratePerDay,
+      status: "APPROVED",
+      createdAt: "Admin now",
+    };
+    setOwnerContracts((prev) => [contract, ...prev]);
+    setCreateForm({ carId: car.id, renter: "", phone: "", email: "" });
+  };
+
+  const bulkImport = () => {
+    setBulkMsg(null);
+    const lines = bulkText.trim().split(/\r?\n/).filter(Boolean);
+    if (lines.length < 2) return setBulkMsg("Provide a header row and at least one data row.");
+    const headers = lines[0].split(",").map((h) => h.trim());
+    const required = ["reg", "make", "model", "seats", "location", "ratePerDay", "stake"];
+    if (!required.every((r) => headers.includes(r))) return setBulkMsg(`Missing columns. Required: ${required.join(", ")}`);
+    let added = 0;
+    const newCars: FleetCar[] = [];
+    for (const row of lines.slice(1)) {
+      const cells = row.split(",").map((c) => c.trim());
+      const obj: Record<string, string> = {};
+      headers.forEach((h, i) => (obj[h] = cells[i] ?? ""));
+      if (!obj.reg || !obj.make) continue;
+      const stake = Math.max(5000, Math.min(10000, Number(obj.stake) || 7000));
+      newCars.push({
+        id: `car-imp-${Date.now()}-${added}`,
+        reg: obj.reg.toUpperCase(),
+        make: obj.make,
+        model: obj.model,
+        seats: Number(obj.seats) || 5,
+        location: obj.location || "Nairobi",
+        ratePerDay: Number(obj.ratePerDay) || 4000,
+        stake,
+        speedLimit: 80,
+        allowedHours: "06:00–22:00",
+        maxHireDays: 7,
+        requiresWalletMinimum: stake + 1000,
+        available: true,
+        ownerListed: true,
+      });
+      added++;
+    }
+    if (!added) return setBulkMsg("No valid rows found.");
+    setInventory((prev) => [...newCars, ...prev]);
+    setBulkMsg(`Imported ${added} vehicle${added === 1 ? "" : "s"}.`);
+  };
+
+  const settleFineFor = (contract: HireContract) => {
+    const car = rentalFleet.find((c) => c.id === contract.carId);
+    if (!car) return;
+    const cat = ntsaFineCatalog[Math.floor(Math.random() * ntsaFineCatalog.length)];
+    const canDeduct = walletPool >= cat.amount;
+    const fine: NtsaFine = {
+      id: `fine-sim-${Date.now()}`,
+      contractId: contract.id,
+      reg: car.reg,
+      reason: cat.reason,
+      speed: Math.max(cat.speed, car.speedLimit + 10),
+      limit: car.speedLimit,
+      amount: cat.amount,
+      status: canDeduct ? "AUTO-DEDUCTED" : "INSUFFICIENT WALLET",
+      createdAt: new Date().toLocaleTimeString("en-KE", { hour: "2-digit", minute: "2-digit" }),
+    };
+    setAdminFines((prev) => [fine, ...prev]);
+    if (canDeduct) setWalletPool((prev) => prev - cat.amount);
   };
 
   return (
@@ -171,23 +236,48 @@ function AdminPage() {
               <h2 className="text-sm font-semibold"><FileText className="mr-2 inline h-4 w-4 text-[var(--neon)]" />Admin-only hire contracts</h2>
               <p className="mt-1 text-xs text-muted-foreground">Owner creates contracts and approves renter requests tied to phone and email delegation.</p>
             </div>
-            <button onClick={createAdminContract} className="rounded-lg bg-[var(--neon)] px-4 py-2 text-xs font-bold text-[var(--primary-foreground)]"><Plus className="mr-1 inline h-4 w-4" />Create contract</button>
+            <div className="text-[11px] font-mono text-muted-foreground">Wallet pool: <span className="text-[var(--lime)]">{formatKes(walletPool)}</span></div>
           </div>
+
+          {/* Hire contract creation form */}
+          <div className="mb-4 grid gap-2 rounded-xl border border-[var(--neon)]/30 bg-[var(--neon)]/5 p-4 text-xs sm:grid-cols-[1fr_1fr_1fr_1fr_auto]">
+            <label className="flex flex-col gap-1"><span className="text-[10px] font-mono uppercase tracking-widest text-muted-foreground">Vehicle</span>
+              <select value={createForm.carId} onChange={(e) => setCreateForm({ ...createForm, carId: e.target.value })} className="rounded-md border border-border bg-background/50 px-2 py-1.5">
+                {rentalFleet.map((c) => <option key={c.id} value={c.id}>{c.reg} · {c.make} {c.model}</option>)}
+              </select>
+            </label>
+            <label className="flex flex-col gap-1"><span className="text-[10px] font-mono uppercase tracking-widest text-muted-foreground">Renter name</span>
+              <input value={createForm.renter} onChange={(e) => setCreateForm({ ...createForm, renter: e.target.value })} className="rounded-md border border-border bg-background/50 px-2 py-1.5" />
+            </label>
+            <label className="flex flex-col gap-1"><span className="text-[10px] font-mono uppercase tracking-widest text-muted-foreground">Phone</span>
+              <input value={createForm.phone} onChange={(e) => setCreateForm({ ...createForm, phone: e.target.value })} className="rounded-md border border-border bg-background/50 px-2 py-1.5" />
+            </label>
+            <label className="flex flex-col gap-1"><span className="text-[10px] font-mono uppercase tracking-widest text-muted-foreground">Email</span>
+              <input type="email" value={createForm.email} onChange={(e) => setCreateForm({ ...createForm, email: e.target.value })} className="rounded-md border border-border bg-background/50 px-2 py-1.5" />
+            </label>
+            <button onClick={createAdminContract} className="self-end rounded-lg bg-[var(--neon)] px-4 py-2 text-xs font-bold text-[var(--primary-foreground)]"><Plus className="mr-1 inline h-4 w-4" />Create</button>
+          </div>
+
           <div className="grid gap-3 lg:grid-cols-2">
             {ownerContracts.map((contract) => {
               const car = rentalFleet.find((item) => item.id === contract.carId);
+              const fines = adminFines.filter((f) => f.contractId === contract.id);
               return (
                 <div key={contract.id} className="rounded-xl border border-border bg-background/30 p-4 text-xs">
                   <div className="flex items-start justify-between gap-3">
                     <div><div className="font-mono text-[var(--neon)]">{contract.id}</div><div className="mt-1 font-semibold">{car?.reg} · {car?.make} {car?.model}</div></div>
                     <span className={contract.status === "REQUESTED" ? "text-[var(--danger)]" : "text-[var(--lime)]"}>{contract.status}</span>
                   </div>
-                  <div className="mt-2 text-muted-foreground">{contract.renter} · {contract.renterPhone} · {contract.renterEmail}</div>
-                  <div className="mt-2 text-foreground">Stake {formatKes(contract.stake)} · Rate {formatKes(contract.ratePerDay)}/day</div>
+                  <div className="mt-2 text-muted-foreground" suppressHydrationWarning>{contract.renter} · {contract.renterPhone} · {contract.renterEmail}</div>
+                  <div className="mt-2 text-foreground">Stake {formatKes(contract.stake)} · Rate {formatKes(contract.ratePerDay)}/day · Fines {formatKes(fines.reduce((s, f) => s + f.amount, 0))}</div>
                   <div className="mt-3 rounded-lg border border-border/60 bg-background/40 p-3">
                     <ContractTimeline status={contract.status} />
                   </div>
-                  {contract.status === "REQUESTED" && <button onClick={() => approveContract(contract.id)} className="mt-3 rounded-lg border border-[var(--lime)]/40 bg-[var(--lime)]/10 px-3 py-2 text-[11px] font-bold text-[var(--lime)]"><CheckCircle2 className="mr-1 inline h-4 w-4" />Approve request</button>}
+                  <div className="mt-3 flex flex-wrap gap-2">
+                    {contract.status === "REQUESTED" && <button onClick={() => approveContract(contract.id)} className="rounded-lg border border-[var(--lime)]/40 bg-[var(--lime)]/10 px-3 py-2 text-[11px] font-bold text-[var(--lime)]"><CheckCircle2 className="mr-1 inline h-4 w-4" />Approve</button>}
+                    <button onClick={() => settleFineFor(contract)} className="rounded-lg border border-[var(--danger)]/40 bg-[var(--danger)]/10 px-3 py-2 text-[11px] font-bold text-[var(--danger)]"><Zap className="mr-1 inline h-4 w-4" />Simulate NTSA fine</button>
+                    <button onClick={() => downloadContractPdf(contract, car, fines)} className="rounded-lg border border-border px-3 py-2 text-[11px] font-bold hover:border-[var(--neon)]/50"><Download className="mr-1 inline h-4 w-4" />Agreement PDF</button>
+                  </div>
                 </div>
               );
             })}
@@ -201,8 +291,26 @@ function AdminPage() {
               <h2 className="text-sm font-semibold"><Car className="mr-2 inline h-4 w-4 text-[var(--lime)]" />Admin car inventory</h2>
               <p className="mt-1 text-xs text-muted-foreground">Add, edit, list/unlist, or remove fleet vehicles. Listed vehicles surface in the public rental workflow.</p>
             </div>
-            <button onClick={() => setEditingCar(blankCar())} className="rounded-lg bg-[var(--lime)] px-4 py-2 text-xs font-bold text-[var(--accent-foreground)]"><Plus className="mr-1 inline h-4 w-4" />Add vehicle</button>
+            <div className="flex flex-wrap gap-2">
+              <button onClick={() => setBulkOpen((v) => !v)} className="rounded-lg border border-[var(--neon)]/40 bg-[var(--neon)]/10 px-4 py-2 text-xs font-bold text-[var(--neon)]"><Upload className="mr-1 inline h-4 w-4" />Bulk import</button>
+              <button onClick={() => setEditingCar(blankCar())} className="rounded-lg bg-[var(--lime)] px-4 py-2 text-xs font-bold text-[var(--accent-foreground)]"><Plus className="mr-1 inline h-4 w-4" />Add vehicle</button>
+            </div>
           </div>
+
+          {bulkOpen && (
+            <div className="mb-4 rounded-xl border border-[var(--neon)]/40 bg-[var(--neon)]/5 p-4">
+              <div className="mb-2 flex items-center justify-between">
+                <div className="text-xs font-mono uppercase tracking-widest text-[var(--neon)]">CSV bulk import</div>
+                <button onClick={() => setBulkOpen(false)} className="text-muted-foreground hover:text-foreground"><X className="h-4 w-4" /></button>
+              </div>
+              <p className="mb-2 text-[11px] text-muted-foreground">Headers required: reg, make, model, seats, location, ratePerDay, stake.</p>
+              <textarea value={bulkText} onChange={(e) => setBulkText(e.target.value)} rows={6} className="w-full rounded-md border border-border bg-background/50 p-2 font-mono text-[11px] text-foreground" />
+              <div className="mt-2 flex flex-wrap items-center gap-3">
+                <button onClick={bulkImport} className="rounded-lg bg-[var(--neon)] px-4 py-2 text-xs font-bold text-[var(--primary-foreground)]">Import rows</button>
+                {bulkMsg && <span className="text-xs text-[var(--lime)]">{bulkMsg}</span>}
+              </div>
+            </div>
+          )}
 
           {editingCar && (
             <div className="mb-4 rounded-xl border border-[var(--lime)]/40 bg-[var(--lime)]/5 p-4">
@@ -454,12 +562,12 @@ function AdminPage() {
             <div className="space-y-2">
               {ownerContracts.map((contract) => {
                 const car = rentalFleet.find((item) => item.id === contract.carId);
-                return <div key={contract.id} className="rounded-lg border border-border bg-background/30 p-3 text-xs"><div className="flex justify-between gap-3"><span className="font-mono text-[var(--neon)]">{car?.reg}</span><span className={contract.status === "ACTIVE" ? "text-[var(--lime)]" : "text-muted-foreground"}>{contract.status}</span></div><div className="mt-1 text-muted-foreground">{contract.renter} · {contract.delegatedTo}</div><div className="mt-1 text-foreground">Stake {formatKes(contract.stake)} · Rate {formatKes(contract.ratePerDay)}/day</div></div>;
+                return <div key={contract.id} className="rounded-lg border border-border bg-background/30 p-3 text-xs"><div className="flex justify-between gap-3"><span className="font-mono text-[var(--neon)]">{car?.reg}</span><span className={contract.status === "ACTIVE" ? "text-[var(--lime)]" : "text-muted-foreground"}>{contract.status}</span></div><div className="mt-1 text-muted-foreground" suppressHydrationWarning>{contract.renter} · {contract.delegatedTo}</div><div className="mt-1 text-foreground">Stake {formatKes(contract.stake)} · Rate {formatKes(contract.ratePerDay)}/day</div></div>;
               })}
             </div>
           </section>
 
-          <FineLedgerPanel title={`Owner fine ledger · Σ ${formatKes(ownerFineTotal)}`} fines={mockFineLedger} />
+          <FineLedgerPanel title={`Owner fine ledger · Σ ${formatKes(ownerFineTotal)}`} fines={adminFines} />
         </div>
       </div>
     </main>
