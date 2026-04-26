@@ -54,6 +54,19 @@ export type WalletLedger = {
   createdAt: string;
 };
 
+export type FleetHireBundle = {
+  id: string;
+  renter: string;
+  renterEmail: string;
+  renterPhone: string;
+  carIds: string[];
+  totalStake: number;
+  perCarStake: number;
+  days: number;
+  status: "REQUESTED" | "APPROVED" | "ACTIVE" | "CLOSED";
+  createdAt: string;
+};
+
 export type AvailabilityRule = {
   id: string;
   carId: string;
