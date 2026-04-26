@@ -47,6 +47,37 @@ function UserPage() {
   const [error, setError] = useState<string | null>(null);
   const [contracts, setContracts] = useState(mockHireContracts);
 
+  // Fleet bundle hire — one stake covers many cars
+  const listedFleet = useMemo(() => rentalFleet.filter((c) => c.ownerListed), []);
+  const [bundleSelected, setBundleSelected] = useState<string[]>([]);
+  const [bundleStake, setBundleStake] = useState(8000);
+  const [bundleDays, setBundleDays] = useState(3);
+  const [bundles, setBundles] = useState<FleetHireBundle[]>([]);
+  const [bundleError, setBundleError] = useState<string | null>(null);
+  const toggleBundleCar = (id: string) =>
+    setBundleSelected((prev) => (prev.includes(id) ? prev.filter((x) => x !== id) : [...prev, id]));
+
+  const submitBundle = () => {
+    setBundleError(null);
+    if (bundleSelected.length < 2) return setBundleError("Pick at least 2 cars to bundle.");
+    if (bundleSelected.length > 10) return setBundleError("Maximum 10 cars per bundle.");
+    const stake = Math.max(STAKE_MIN, Math.min(STAKE_MAX, bundleStake));
+    const bundle: FleetHireBundle = {
+      id: `bundle-${Date.now()}`,
+      renter: name,
+      renterEmail: email,
+      renterPhone: phone,
+      carIds: bundleSelected,
+      totalStake: stake,
+      perCarStake: Math.round(stake / bundleSelected.length),
+      days: bundleDays,
+      status: "REQUESTED",
+      createdAt: new Date().toLocaleTimeString("en-KE", { hour: "2-digit", minute: "2-digit" }),
+    };
+    setBundles((prev) => [bundle, ...prev]);
+    setBundleSelected([]);
+  };
+
   const totalFines = mockFineLedger.reduce((sum, fine) => sum + fine.amount, 0);
   const lockedStake = contracts.filter((c) => c.status === "ACTIVE").reduce((sum, c) => sum + c.stake, 0);
 
