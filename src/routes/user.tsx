@@ -264,6 +264,17 @@ function UserPage() {
                   <div className="mt-1 text-muted-foreground">
                     {b.carIds.map((id) => rentalFleet.find((c) => c.id === id)?.reg ?? id).join(" · ")}
                   </div>
+                  <div className="mt-3 rounded-md border border-border/60 bg-background/40 p-3">
+                    <BundleTimeline status={b.status} carCount={b.carIds.length} />
+                  </div>
+                  <div className="mt-3 flex flex-wrap gap-2">
+                    <button
+                      onClick={() => downloadBundlePdf(b, rentalFleet)}
+                      className="rounded-md border border-[var(--neon)]/40 bg-[var(--neon)]/10 px-3 py-1.5 text-[11px] font-bold text-[var(--neon)]"
+                    >
+                      <Download className="mr-1 inline h-3 w-3" />Bundle agreement PDF
+                    </button>
+                  </div>
                 </div>
               ))}
             </div>
