@@ -204,6 +204,21 @@ export function getPublicContractPreviews(limit = 6) {
     .slice(0, limit);
 }
 
+export const mockHireBundles: FleetHireBundle[] = [
+  {
+    id: "bundle-seed-1",
+    renter: "Brian O.",
+    renterEmail: "brian.otieno@example.co.ke",
+    renterPhone: "+254 733 110 204",
+    carIds: ["car-2", "car-3"],
+    totalStake: 9000,
+    perCarStake: 4500,
+    days: 4,
+    status: "REQUESTED",
+    createdAt: "13:50",
+  },
+];
+
 export function formatKes(amount: number) {
   return `KES ${amount.toLocaleString("en-KE")}`;
 }

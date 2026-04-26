@@ -19,6 +19,8 @@ import {
   type HireContract,
 } from "@/lib/rentalFlow";
 import { downloadContractPdf } from "@/lib/contractPdf";
+import { downloadBundlePdf } from "@/lib/bundlePdf";
+import BundleTimeline from "@/components/BundleTimeline";
 
 const searchSchema = z.object({ carId: z.string().optional() });
 
@@ -54,13 +56,31 @@ function UserPage() {
   const [bundleDays, setBundleDays] = useState(3);
   const [bundles, setBundles] = useState<FleetHireBundle[]>([]);
   const [bundleError, setBundleError] = useState<string | null>(null);
-  const toggleBundleCar = (id: string) =>
+  // Cars already locked by an active/approved/requested bundle or contract
+  const lockedCarIds = useMemo(() => {
+    const fromContracts = contracts
+      .filter((c) => c.status === "REQUESTED" || c.status === "APPROVED" || c.status === "ACTIVE")
+      .map((c) => c.carId);
+    const fromBundles = bundles
+      .filter((b) => b.status === "REQUESTED" || b.status === "APPROVED" || b.status === "ACTIVE")
+      .flatMap((b) => b.carIds);
+    return new Set([...fromContracts, ...fromBundles]);
+  }, [contracts, bundles]);
+
+  const toggleBundleCar = (id: string) => {
+    if (lockedCarIds.has(id) && !bundleSelected.includes(id)) return;
     setBundleSelected((prev) => (prev.includes(id) ? prev.filter((x) => x !== id) : [...prev, id]));
+  };
 
   const submitBundle = () => {
     setBundleError(null);
     if (bundleSelected.length < 2) return setBundleError("Pick at least 2 cars to bundle.");
     if (bundleSelected.length > 10) return setBundleError("Maximum 10 cars per bundle.");
+    const conflicts = bundleSelected.filter((id) => lockedCarIds.has(id));
+    if (conflicts.length) {
+      const regs = conflicts.map((id) => rentalFleet.find((c) => c.id === id)?.reg ?? id).join(", ");
+      return setBundleError(`Conflict: ${regs} already locked in another contract or bundle.`);
+    }
     const stake = Math.max(STAKE_MIN, Math.min(STAKE_MAX, bundleStake));
     const bundle: FleetHireBundle = {
       id: `bundle-${Date.now()}`,
@@ -181,16 +201,24 @@ function UserPage() {
           <div className="grid gap-2 sm:grid-cols-2 lg:grid-cols-3 mb-4">
             {listedFleet.map((car) => {
               const checked = bundleSelected.includes(car.id);
+              const locked = lockedCarIds.has(car.id) && !checked;
               return (
                 <label
                   key={car.id}
-                  className={`flex cursor-pointer items-start gap-2 rounded-lg border p-3 text-xs transition ${checked ? "border-[var(--neon)] bg-[var(--neon)]/10" : "border-border bg-background/30 hover:border-[var(--neon)]/40"}`}
+                  className={`flex items-start gap-2 rounded-lg border p-3 text-xs transition ${
+                    locked
+                      ? "border-[var(--danger)]/30 bg-[var(--danger)]/5 cursor-not-allowed opacity-60"
+                      : checked
+                        ? "border-[var(--neon)] bg-[var(--neon)]/10 cursor-pointer"
+                        : "border-border bg-background/30 hover:border-[var(--neon)]/40 cursor-pointer"
+                  }`}
                 >
-                  <input type="checkbox" checked={checked} onChange={() => toggleBundleCar(car.id)} className="mt-0.5" />
+                  <input type="checkbox" checked={checked} disabled={locked} onChange={() => toggleBundleCar(car.id)} className="mt-0.5" />
                   <div className="flex-1">
                     <div className="font-mono text-[var(--neon)]">{car.reg}</div>
                     <div className="font-semibold">{car.make} {car.model}</div>
                     <div className="text-muted-foreground">{car.location} · {formatKes(car.ratePerDay)}/day</div>
+                    {locked && <div className="mt-1 text-[10px] font-mono text-[var(--danger)]">LOCKED · in another contract/bundle</div>}
                   </div>
                 </label>
               );
@@ -235,6 +263,17 @@ function UserPage() {
                   </div>
                   <div className="mt-1 text-muted-foreground">
                     {b.carIds.map((id) => rentalFleet.find((c) => c.id === id)?.reg ?? id).join(" · ")}
+                  </div>
+                  <div className="mt-3 rounded-md border border-border/60 bg-background/40 p-3">
+                    <BundleTimeline status={b.status} carCount={b.carIds.length} />
+                  </div>
+                  <div className="mt-3 flex flex-wrap gap-2">
+                    <button
+                      onClick={() => downloadBundlePdf(b, rentalFleet)}
+                      className="rounded-md border border-[var(--neon)]/40 bg-[var(--neon)]/10 px-3 py-1.5 text-[11px] font-bold text-[var(--neon)]"
+                    >
+                      <Download className="mr-1 inline h-3 w-3" />Bundle agreement PDF
+                    </button>
                   </div>
                 </div>
               ))}

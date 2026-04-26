@@ -12,9 +12,11 @@ import {
   type Vehicle,
   type Violation,
 } from "@/lib/mockFleet";
-import { Users, Car, AlertTriangle, Wallet, Trash2, CheckCircle2, Plus, FileText, Pencil, X, Upload, Zap, Download } from "lucide-react";
-import { formatKes, mockFineLedger, mockHireContracts, ntsaFineCatalog, rentalFleet, type FleetCar, type HireContract, type NtsaFine } from "@/lib/rentalFlow";
+import { Users, Car, AlertTriangle, Wallet, Trash2, CheckCircle2, Plus, FileText, Pencil, X, Upload, Zap, Download, Layers } from "lucide-react";
+import { formatKes, mockFineLedger, mockHireBundles, mockHireContracts, ntsaFineCatalog, rentalFleet, type FleetCar, type FleetHireBundle, type HireContract, type NtsaFine } from "@/lib/rentalFlow";
 import { downloadContractPdf } from "@/lib/contractPdf";
+import { downloadBundlePdf } from "@/lib/bundlePdf";
+import BundleTimeline from "@/components/BundleTimeline";
 
 export const Route = createFileRoute("/admin")({
   head: () => ({
@@ -41,6 +43,7 @@ function AdminPage() {
   const [fleet, setFleet] = useState<Vehicle[]>(() => seedFleet());
   const [violations, setViolations] = useState<Violation[]>([]);
   const [ownerContracts, setOwnerContracts] = useState<HireContract[]>(mockHireContracts);
+  const [ownerBundles, setOwnerBundles] = useState<FleetHireBundle[]>(mockHireBundles);
   const [inventory, setInventory] = useState<FleetCar[]>(rentalFleet);
   const [editingCar, setEditingCar] = useState<FleetCar | null>(null);
   const [bulkOpen, setBulkOpen] = useState(false);
@@ -110,6 +113,25 @@ function AdminPage() {
 
   const approveContract = (id: string) => {
     setOwnerContracts((prev) => prev.map((contract) => (contract.id === id ? { ...contract, status: "APPROVED" } : contract)));
+  };
+
+  // Cars locked by any active/approved/requested contract OR bundle (conflict prevention)
+  const lockedCarIds = (() => {
+    const fromContracts = ownerContracts
+      .filter((c) => c.status === "REQUESTED" || c.status === "APPROVED" || c.status === "ACTIVE")
+      .map((c) => c.carId);
+    const fromBundles = ownerBundles
+      .filter((b) => b.status === "REQUESTED" || b.status === "APPROVED" || b.status === "ACTIVE")
+      .flatMap((b) => b.carIds);
+    return new Set([...fromContracts, ...fromBundles]);
+  })();
+
+  const advanceBundle = (id: string, next: FleetHireBundle["status"]) => {
+    setOwnerBundles((prev) => prev.map((b) => (b.id === id ? { ...b, status: next } : b)));
+  };
+
+  const rejectBundle = (id: string) => {
+    setOwnerBundles((prev) => prev.filter((b) => b.id !== id));
   };
 
   const createAdminContract = () => {
@@ -283,6 +305,100 @@ function AdminPage() {
             })}
           </div>
           <div className="mt-3 text-xs text-muted-foreground">Pending owner approvals: <span className="text-foreground">{requestedContracts.length}</span></div>
+        </section>
+
+        {/* Bundle approval flow */}
+        <section className="mb-5 glass rounded-2xl p-5 border border-[var(--neon)]/30">
+          <div className="mb-4 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+            <div>
+              <h2 className="text-sm font-semibold"><Layers className="mr-2 inline h-4 w-4 text-[var(--neon)]" />Fleet bundle approvals</h2>
+              <p className="mt-1 text-xs text-muted-foreground">Approve or reject multi-car bundle requests. Conflicts with existing contracts are flagged before approval.</p>
+            </div>
+            <div className="text-[11px] font-mono text-muted-foreground">Pending bundles: <span className="text-foreground">{ownerBundles.filter((b) => b.status === "REQUESTED").length}</span></div>
+          </div>
+
+          {ownerBundles.length === 0 && <div className="text-xs text-muted-foreground">No bundle requests yet.</div>}
+
+          <div className="grid gap-3 lg:grid-cols-2">
+            {ownerBundles.map((b) => {
+              // Conflict scan: any car in this bundle that is locked by ANOTHER contract/bundle
+              const conflicts = b.carIds.filter((id) => {
+                const otherContract = ownerContracts.some((c) => c.carId === id && (c.status === "APPROVED" || c.status === "ACTIVE"));
+                const otherBundle = ownerBundles.some((other) => other.id !== b.id && other.carIds.includes(id) && (other.status === "APPROVED" || other.status === "ACTIVE"));
+                return otherContract || otherBundle;
+              });
+              const conflictRegs = conflicts.map((id) => rentalFleet.find((c) => c.id === id)?.reg ?? id);
+              const canApprove = b.status === "REQUESTED" && conflicts.length === 0;
+
+              return (
+                <div key={b.id} className="rounded-xl border border-border bg-background/30 p-4 text-xs">
+                  <div className="flex items-start justify-between gap-3">
+                    <div>
+                      <div className="font-mono text-[var(--neon)]">{b.id}</div>
+                      <div className="mt-1 font-semibold">{b.carIds.length} cars · {b.days} days</div>
+                    </div>
+                    <span className={
+                      b.status === "REQUESTED" ? "text-[var(--danger)]" :
+                      b.status === "CLOSED" ? "text-muted-foreground" : "text-[var(--lime)]"
+                    }>{b.status}</span>
+                  </div>
+                  <div className="mt-2 text-muted-foreground" suppressHydrationWarning>{b.renter} · {b.renterPhone} · {b.renterEmail}</div>
+                  <div className="mt-2 text-foreground">Total stake {formatKes(b.totalStake)} · Per-car {formatKes(b.perCarStake)}</div>
+                  <div className="mt-1 text-muted-foreground">
+                    {b.carIds.map((id) => {
+                      const reg = rentalFleet.find((c) => c.id === id)?.reg ?? id;
+                      const inConflict = conflicts.includes(id);
+                      return <span key={id} className={inConflict ? "text-[var(--danger)] mr-2" : "mr-2"}>{reg}{inConflict ? "⚠" : ""}</span>;
+                    })}
+                  </div>
+
+                  {conflicts.length > 0 && (
+                    <div className="mt-2 rounded-md border border-[var(--danger)]/40 bg-[var(--danger)]/10 p-2 text-[11px] text-[var(--danger)]">
+                      <AlertTriangle className="mr-1 inline h-3 w-3" />Conflict: {conflictRegs.join(", ")} already locked elsewhere. Resolve before approval.
+                    </div>
+                  )}
+
+                  <div className="mt-3 rounded-lg border border-border/60 bg-background/40 p-3">
+                    <BundleTimeline status={b.status} carCount={b.carIds.length} />
+                  </div>
+
+                  <div className="mt-3 flex flex-wrap gap-2">
+                    {b.status === "REQUESTED" && (
+                      <>
+                        <button
+                          onClick={() => advanceBundle(b.id, "APPROVED")}
+                          disabled={!canApprove}
+                          className="rounded-lg border border-[var(--lime)]/40 bg-[var(--lime)]/10 px-3 py-2 text-[11px] font-bold text-[var(--lime)] disabled:opacity-40"
+                        >
+                          <CheckCircle2 className="mr-1 inline h-4 w-4" />Approve bundle
+                        </button>
+                        <button onClick={() => rejectBundle(b.id)} className="rounded-lg border border-[var(--danger)]/40 bg-[var(--danger)]/10 px-3 py-2 text-[11px] font-bold text-[var(--danger)]">
+                          <X className="mr-1 inline h-4 w-4" />Reject
+                        </button>
+                      </>
+                    )}
+                    {b.status === "APPROVED" && (
+                      <button onClick={() => advanceBundle(b.id, "ACTIVE")} className="rounded-lg border border-[var(--neon)]/40 bg-[var(--neon)]/10 px-3 py-2 text-[11px] font-bold text-[var(--neon)]">
+                        <Zap className="mr-1 inline h-4 w-4" />Lock stake · activate
+                      </button>
+                    )}
+                    {b.status === "ACTIVE" && (
+                      <button onClick={() => advanceBundle(b.id, "CLOSED")} className="rounded-lg border border-border px-3 py-2 text-[11px] font-bold hover:border-[var(--lime)]/50">
+                        Close bundle
+                      </button>
+                    )}
+                    <button onClick={() => downloadBundlePdf(b, rentalFleet)} className="rounded-lg border border-border px-3 py-2 text-[11px] font-bold hover:border-[var(--neon)]/50">
+                      <Download className="mr-1 inline h-4 w-4" />Bundle PDF
+                    </button>
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+
+          <div className="mt-3 text-[11px] text-muted-foreground">
+            Locked cars across all contracts/bundles: <span className="text-foreground">{lockedCarIds.size}</span>
+          </div>
         </section>
 
         <section className="mb-5 glass rounded-2xl p-5">
