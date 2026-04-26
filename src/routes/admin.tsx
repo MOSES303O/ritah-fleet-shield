@@ -55,6 +55,8 @@ function AdminPage() {
   const [adminFines, setAdminFines] = useState<NtsaFine[]>(mockFineLedger);
   const [walletPool, setWalletPool] = useState(50000);
   const [createForm, setCreateForm] = useState({ carId: rentalFleet[0]?.id ?? "", renter: "", phone: "", email: "" });
+  const [bundleDisputes, setBundleDisputes] = useState<Record<string, BundleDispute>>({});
+  const [disputeDraft, setDisputeDraft] = useState<Record<string, string>>({});
 
   const blankCar = (): FleetCar => ({
     id: `car-${Date.now()}`,
