@@ -3,10 +3,7 @@ import Nav from "@/components/Nav";
 import Hero from "@/components/Hero";
 import WhyNow from "@/components/WhyNow";
 import Features from "@/components/Features";
-import Dashboards from "@/components/Dashboards";
 import ContractFlow from "@/components/ContractFlow";
-import RentalWorkflow from "@/components/RentalWorkflow";
-import PublicContractPreviews from "@/components/PublicContractPreviews";
 import LandingSearch from "@/components/LandingSearch";
 import CTA from "@/components/CTA";
 
