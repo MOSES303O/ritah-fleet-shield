@@ -56,13 +56,31 @@ function UserPage() {
   const [bundleDays, setBundleDays] = useState(3);
   const [bundles, setBundles] = useState<FleetHireBundle[]>([]);
   const [bundleError, setBundleError] = useState<string | null>(null);
-  const toggleBundleCar = (id: string) =>
+  // Cars already locked by an active/approved/requested bundle or contract
+  const lockedCarIds = useMemo(() => {
+    const fromContracts = contracts
+      .filter((c) => c.status === "REQUESTED" || c.status === "APPROVED" || c.status === "ACTIVE")
+      .map((c) => c.carId);
+    const fromBundles = bundles
+      .filter((b) => b.status === "REQUESTED" || b.status === "APPROVED" || b.status === "ACTIVE")
+      .flatMap((b) => b.carIds);
+    return new Set([...fromContracts, ...fromBundles]);
+  }, [contracts, bundles]);
+
+  const toggleBundleCar = (id: string) => {
+    if (lockedCarIds.has(id) && !bundleSelected.includes(id)) return;
     setBundleSelected((prev) => (prev.includes(id) ? prev.filter((x) => x !== id) : [...prev, id]));
+  };
 
   const submitBundle = () => {
     setBundleError(null);
     if (bundleSelected.length < 2) return setBundleError("Pick at least 2 cars to bundle.");
     if (bundleSelected.length > 10) return setBundleError("Maximum 10 cars per bundle.");
+    const conflicts = bundleSelected.filter((id) => lockedCarIds.has(id));
+    if (conflicts.length) {
+      const regs = conflicts.map((id) => rentalFleet.find((c) => c.id === id)?.reg ?? id).join(", ");
+      return setBundleError(`Conflict: ${regs} already locked in another contract or bundle.`);
+    }
     const stake = Math.max(STAKE_MIN, Math.min(STAKE_MAX, bundleStake));
     const bundle: FleetHireBundle = {
       id: `bundle-${Date.now()}`,
