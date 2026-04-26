@@ -369,7 +369,8 @@ function AdminPage() {
                 return otherContract || otherBundle;
               });
               const conflictRegs = conflicts.map((id) => rentalFleet.find((c) => c.id === id)?.reg ?? id);
-              const canApprove = b.status === "REQUESTED" && conflicts.length === 0;
+              const dispute = bundleDisputes[b.id];
+              const canApprove = b.status === "REQUESTED" && (conflicts.length === 0 || dispute?.overrideApproved);
 
               return (
                 <div key={b.id} className="rounded-xl border border-border bg-background/30 p-4 text-xs">
@@ -394,8 +395,37 @@ function AdminPage() {
                   </div>
 
                   {conflicts.length > 0 && (
-                    <div className="mt-2 rounded-md border border-[var(--danger)]/40 bg-[var(--danger)]/10 p-2 text-[11px] text-[var(--danger)]">
-                      <AlertTriangle className="mr-1 inline h-3 w-3" />Conflict: {conflictRegs.join(", ")} already locked elsewhere. Resolve before approval.
+                    <div className="mt-2 space-y-2 rounded-md border border-[var(--danger)]/40 bg-[var(--danger)]/10 p-2 text-[11px] text-[var(--danger)]">
+                      <div><AlertTriangle className="mr-1 inline h-3 w-3" />Conflict: {conflictRegs.join(", ")} already locked elsewhere.</div>
+                      {!dispute && (
+                        <div className="flex flex-col gap-2 sm:flex-row">
+                          <input
+                            value={disputeDraft[b.id] ?? ""}
+                            onChange={(e) => setDisputeDraft((prev) => ({ ...prev, [b.id]: e.target.value }))}
+                            placeholder="Dispute reason (e.g. prior contract cancelled)"
+                            className="flex-1 rounded-md border border-[var(--danger)]/40 bg-background/50 px-2 py-1 text-foreground placeholder:text-muted-foreground"
+                          />
+                          <button onClick={() => fileBundleDispute(b.id)} className="rounded-md border border-[var(--danger)]/60 bg-[var(--danger)]/20 px-3 py-1 font-bold">
+                            <ShieldAlert className="mr-1 inline h-3 w-3" />File dispute
+                          </button>
+                        </div>
+                      )}
+                      {dispute && (
+                        <div className="rounded-md border border-[var(--danger)]/30 bg-background/30 p-2 text-foreground">
+                          <div className="text-[10px] font-mono uppercase tracking-widest text-[var(--danger)]">Dispute · {dispute.createdAt}</div>
+                          <div className="mt-1 text-[11px]">{dispute.reason}</div>
+                          <div className="mt-2 flex flex-wrap gap-2">
+                            {!dispute.overrideApproved ? (
+                              <button onClick={() => overrideBundleDispute(b.id)} className="rounded-md border border-[var(--lime)]/50 bg-[var(--lime)]/10 px-2 py-1 text-[11px] font-bold text-[var(--lime)]">
+                                <CheckCircle2 className="mr-1 inline h-3 w-3" />Authorise override
+                              </button>
+                            ) : (
+                              <span className="text-[11px] text-[var(--lime)]">Override authorised — approval unlocked.</span>
+                            )}
+                            <button onClick={() => clearBundleDispute(b.id)} className="rounded-md border border-border px-2 py-1 text-[11px]">Clear dispute</button>
+                          </div>
+                        </div>
+                      )}
                     </div>
                   )}
 
