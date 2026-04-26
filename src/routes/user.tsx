@@ -201,16 +201,24 @@ function UserPage() {
           <div className="grid gap-2 sm:grid-cols-2 lg:grid-cols-3 mb-4">
             {listedFleet.map((car) => {
               const checked = bundleSelected.includes(car.id);
+              const locked = lockedCarIds.has(car.id) && !checked;
               return (
                 <label
                   key={car.id}
-                  className={`flex cursor-pointer items-start gap-2 rounded-lg border p-3 text-xs transition ${checked ? "border-[var(--neon)] bg-[var(--neon)]/10" : "border-border bg-background/30 hover:border-[var(--neon)]/40"}`}
+                  className={`flex items-start gap-2 rounded-lg border p-3 text-xs transition ${
+                    locked
+                      ? "border-[var(--danger)]/30 bg-[var(--danger)]/5 cursor-not-allowed opacity-60"
+                      : checked
+                        ? "border-[var(--neon)] bg-[var(--neon)]/10 cursor-pointer"
+                        : "border-border bg-background/30 hover:border-[var(--neon)]/40 cursor-pointer"
+                  }`}
                 >
-                  <input type="checkbox" checked={checked} onChange={() => toggleBundleCar(car.id)} className="mt-0.5" />
+                  <input type="checkbox" checked={checked} disabled={locked} onChange={() => toggleBundleCar(car.id)} className="mt-0.5" />
                   <div className="flex-1">
                     <div className="font-mono text-[var(--neon)]">{car.reg}</div>
                     <div className="font-semibold">{car.make} {car.model}</div>
                     <div className="text-muted-foreground">{car.location} · {formatKes(car.ratePerDay)}/day</div>
+                    {locked && <div className="mt-1 text-[10px] font-mono text-[var(--danger)]">LOCKED · in another contract/bundle</div>}
                   </div>
                 </label>
               );
