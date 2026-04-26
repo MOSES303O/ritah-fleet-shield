@@ -133,10 +133,46 @@ function AdminPage() {
 
   const advanceBundle = (id: string, next: FleetHireBundle["status"]) => {
     setOwnerBundles((prev) => prev.map((b) => (b.id === id ? { ...b, status: next } : b)));
+    const labels: Record<FleetHireBundle["status"], string> = {
+      REQUESTED: "Bundle reset to requested",
+      APPROVED: "Bundle approved",
+      ACTIVE: "Bundle active · stake locked",
+      CLOSED: "Bundle closed · stake released",
+    };
+    toast.success(labels[next], { description: `Bundle ${id}` });
   };
 
   const rejectBundle = (id: string) => {
     setOwnerBundles((prev) => prev.filter((b) => b.id !== id));
+    toast.error("Bundle rejected", { description: `Bundle ${id} removed from queue.` });
+  };
+
+  const fileBundleDispute = (id: string) => {
+    const reason = (disputeDraft[id] ?? "").trim();
+    if (!reason) {
+      toast.warning("Add a dispute reason before filing.");
+      return;
+    }
+    setBundleDisputes((prev) => ({
+      ...prev,
+      [id]: { reason, overrideApproved: false, createdAt: new Date().toLocaleTimeString("en-KE", { hour: "2-digit", minute: "2-digit" }) },
+    }));
+    setDisputeDraft((prev) => ({ ...prev, [id]: "" }));
+    toast.info("Dispute filed", { description: "Renter notified · awaiting override decision." });
+  };
+
+  const overrideBundleDispute = (id: string) => {
+    setBundleDisputes((prev) => prev[id] ? { ...prev, [id]: { ...prev[id], overrideApproved: true } } : prev);
+    toast.success("Conflict override authorised", { description: "You can now approve this bundle." });
+  };
+
+  const clearBundleDispute = (id: string) => {
+    setBundleDisputes((prev) => {
+      const next = { ...prev };
+      delete next[id];
+      return next;
+    });
+    toast("Dispute cleared.");
   };
 
   const createAdminContract = () => {
