@@ -19,6 +19,8 @@ import {
   type HireContract,
 } from "@/lib/rentalFlow";
 import { downloadContractPdf } from "@/lib/contractPdf";
+import { downloadBundlePdf } from "@/lib/bundlePdf";
+import BundleTimeline from "@/components/BundleTimeline";
 
 const searchSchema = z.object({ carId: z.string().optional() });
 
