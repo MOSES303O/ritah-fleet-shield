@@ -13,6 +13,9 @@ import {
   mockWalletHistory,
   rentalFleet,
   renterIdentity,
+  STAKE_MIN,
+  STAKE_MAX,
+  type FleetHireBundle,
   type HireContract,
 } from "@/lib/rentalFlow";
 import { downloadContractPdf } from "@/lib/contractPdf";
