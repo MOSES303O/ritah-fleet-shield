@@ -12,11 +12,14 @@ import {
   type Vehicle,
   type Violation,
 } from "@/lib/mockFleet";
-import { Users, Car, AlertTriangle, Wallet, Trash2, CheckCircle2, Plus, FileText, Pencil, X, Upload, Zap, Download, Layers } from "lucide-react";
+import { Users, Car, AlertTriangle, Wallet, Trash2, CheckCircle2, Plus, FileText, Pencil, X, Upload, Zap, Download, Layers, ShieldAlert } from "lucide-react";
 import { formatKes, mockFineLedger, mockHireBundles, mockHireContracts, ntsaFineCatalog, rentalFleet, type FleetCar, type FleetHireBundle, type HireContract, type NtsaFine } from "@/lib/rentalFlow";
 import { downloadContractPdf } from "@/lib/contractPdf";
 import { downloadBundlePdf } from "@/lib/bundlePdf";
 import BundleTimeline from "@/components/BundleTimeline";
+import { toast } from "sonner";
+
+type BundleDispute = { reason: string; overrideApproved: boolean; createdAt: string };
 
 export const Route = createFileRoute("/admin")({
   head: () => ({
