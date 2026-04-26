@@ -35,9 +35,6 @@ function Index() {
       <LandingSearch />
       <WhyNow />
       <Features />
-      <Dashboards />
-      <PublicContractPreviews />
-      <RentalWorkflow />
       <ContractFlow />
       <CTA />
     </main>
