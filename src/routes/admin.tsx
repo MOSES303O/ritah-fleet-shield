@@ -43,6 +43,7 @@ function AdminPage() {
   const [fleet, setFleet] = useState<Vehicle[]>(() => seedFleet());
   const [violations, setViolations] = useState<Violation[]>([]);
   const [ownerContracts, setOwnerContracts] = useState<HireContract[]>(mockHireContracts);
+  const [ownerBundles, setOwnerBundles] = useState<FleetHireBundle[]>(mockHireBundles);
   const [inventory, setInventory] = useState<FleetCar[]>(rentalFleet);
   const [editingCar, setEditingCar] = useState<FleetCar | null>(null);
   const [bulkOpen, setBulkOpen] = useState(false);
