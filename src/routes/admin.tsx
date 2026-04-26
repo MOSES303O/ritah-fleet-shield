@@ -115,6 +115,25 @@ function AdminPage() {
     setOwnerContracts((prev) => prev.map((contract) => (contract.id === id ? { ...contract, status: "APPROVED" } : contract)));
   };
 
+  // Cars locked by any active/approved/requested contract OR bundle (conflict prevention)
+  const lockedCarIds = (() => {
+    const fromContracts = ownerContracts
+      .filter((c) => c.status === "REQUESTED" || c.status === "APPROVED" || c.status === "ACTIVE")
+      .map((c) => c.carId);
+    const fromBundles = ownerBundles
+      .filter((b) => b.status === "REQUESTED" || b.status === "APPROVED" || b.status === "ACTIVE")
+      .flatMap((b) => b.carIds);
+    return new Set([...fromContracts, ...fromBundles]);
+  })();
+
+  const advanceBundle = (id: string, next: FleetHireBundle["status"]) => {
+    setOwnerBundles((prev) => prev.map((b) => (b.id === id ? { ...b, status: next } : b)));
+  };
+
+  const rejectBundle = (id: string) => {
+    setOwnerBundles((prev) => prev.filter((b) => b.id !== id));
+  };
+
   const createAdminContract = () => {
     const car = rentalFleet.find((item) => item.id === createForm.carId) ?? rentalFleet[0];
     if (!car || !createForm.renter.trim() || !createForm.phone.trim() || !createForm.email.trim()) return;
