@@ -168,6 +168,80 @@ function UserPage() {
           )}
         </section>
 
+        {/* Fleet bundle hire — one stake covers many cars (up to 10) */}
+        <section className="glass rounded-2xl p-5 mb-5 border border-[var(--neon)]/30">
+          <div className="flex items-center gap-2 mb-1">
+            <FileText className="h-4 w-4 text-[var(--neon)]" />
+            <h2 className="text-sm font-semibold">Fleet bundle hire — one stake covers up to 10 cars</h2>
+          </div>
+          <p className="text-xs text-muted-foreground mb-4">
+            Select multiple vehicles and post a single combined stake (KES {STAKE_MIN.toLocaleString()}–{STAKE_MAX.toLocaleString()}) instead of contracting each car individually. Owner approves the bundle as one delegation.
+          </p>
+
+          <div className="grid gap-2 sm:grid-cols-2 lg:grid-cols-3 mb-4">
+            {listedFleet.map((car) => {
+              const checked = bundleSelected.includes(car.id);
+              return (
+                <label
+                  key={car.id}
+                  className={`flex cursor-pointer items-start gap-2 rounded-lg border p-3 text-xs transition ${checked ? "border-[var(--neon)] bg-[var(--neon)]/10" : "border-border bg-background/30 hover:border-[var(--neon)]/40"}`}
+                >
+                  <input type="checkbox" checked={checked} onChange={() => toggleBundleCar(car.id)} className="mt-0.5" />
+                  <div className="flex-1">
+                    <div className="font-mono text-[var(--neon)]">{car.reg}</div>
+                    <div className="font-semibold">{car.make} {car.model}</div>
+                    <div className="text-muted-foreground">{car.location} · {formatKes(car.ratePerDay)}/day</div>
+                  </div>
+                </label>
+              );
+            })}
+          </div>
+
+          <div className="grid gap-3 sm:grid-cols-3 text-xs mb-3">
+            <NumField label={`Combined stake (${STAKE_MIN.toLocaleString()}–${STAKE_MAX.toLocaleString()})`} value={bundleStake} onChange={setBundleStake} />
+            <NumField label="Hire days" value={bundleDays} onChange={setBundleDays} />
+            <div className="flex flex-col gap-1">
+              <span className="text-[10px] font-mono uppercase tracking-widest text-muted-foreground">Selected · per-car stake</span>
+              <div className="rounded-md border border-border bg-background/30 px-2 py-1.5 text-foreground">
+                {bundleSelected.length} car{bundleSelected.length === 1 ? "" : "s"} ·{" "}
+                <span className="text-[var(--lime)]">
+                  {bundleSelected.length ? formatKes(Math.round(Math.max(STAKE_MIN, Math.min(STAKE_MAX, bundleStake)) / bundleSelected.length)) : "—"}
+                </span>
+              </div>
+            </div>
+          </div>
+
+          {bundleError && <div className="mb-2 text-xs text-[var(--danger)]">{bundleError}</div>}
+
+          <button
+            onClick={submitBundle}
+            disabled={bundleSelected.length < 2}
+            className="rounded-lg bg-[var(--neon)] px-4 py-2.5 text-sm font-bold text-[var(--primary-foreground)] disabled:opacity-50"
+          >
+            <Send className="mr-1.5 inline h-4 w-4" />Request fleet bundle ({bundleSelected.length})
+          </button>
+
+          {bundles.length > 0 && (
+            <div className="mt-5 space-y-2">
+              <div className="text-[10px] font-mono uppercase tracking-widest text-[var(--lime)]">Your bundle requests</div>
+              {bundles.map((b) => (
+                <div key={b.id} className="rounded-lg border border-border bg-background/30 p-3 text-xs">
+                  <div className="flex justify-between gap-3">
+                    <span className="font-mono text-[var(--neon)]">{b.id}</span>
+                    <span className="text-[var(--lime)]">{b.status}</span>
+                  </div>
+                  <div className="mt-1 text-foreground">
+                    {b.carIds.length} cars · Total stake {formatKes(b.totalStake)} · Per-car {formatKes(b.perCarStake)} · {b.days} days
+                  </div>
+                  <div className="mt-1 text-muted-foreground">
+                    {b.carIds.map((id) => rentalFleet.find((c) => c.id === id)?.reg ?? id).join(" · ")}
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
+        </section>
+
         <div className="grid md:grid-cols-3 gap-4 mb-5">
           <Metric icon={<Wallet className="h-4 w-4" />} label="Wallet balance" value={formatKes(customerWallet.balance)} />
           <Metric icon={<ShieldCheck className="h-4 w-4" />} label="Locked stake" value={formatKes(lockedStake)} />
