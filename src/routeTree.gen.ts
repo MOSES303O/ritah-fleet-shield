@@ -9,12 +9,24 @@
 // Additionally, you should also exclude this file from your linter and/or formatter to prevent it from being checked or modified.
 
 import { Route as rootRouteImport } from './routes/__root'
+import { Route as WalletRouteImport } from './routes/wallet'
 import { Route as UserRouteImport } from './routes/user'
 import { Route as TrackerRouteImport } from './routes/tracker'
+import { Route as SettingsRouteImport } from './routes/settings'
+import { Route as RegisterRouteImport } from './routes/register'
+import { Route as LoginRouteImport } from './routes/login'
+import { Route as FleetRouteImport } from './routes/fleet'
+import { Route as DashboardRouteImport } from './routes/dashboard'
 import { Route as ContractsRouteImport } from './routes/contracts'
 import { Route as AdminRouteImport } from './routes/admin'
 import { Route as IndexRouteImport } from './routes/index'
+import { Route as HireCarIdRouteImport } from './routes/hire.$carId'
 
+const WalletRoute = WalletRouteImport.update({
+  id: '/wallet',
+  path: '/wallet',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const UserRoute = UserRouteImport.update({
   id: '/user',
   path: '/user',
@@ -23,6 +35,31 @@ const UserRoute = UserRouteImport.update({
 const TrackerRoute = TrackerRouteImport.update({
   id: '/tracker',
   path: '/tracker',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const SettingsRoute = SettingsRouteImport.update({
+  id: '/settings',
+  path: '/settings',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const RegisterRoute = RegisterRouteImport.update({
+  id: '/register',
+  path: '/register',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const LoginRoute = LoginRouteImport.update({
+  id: '/login',
+  path: '/login',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const FleetRoute = FleetRouteImport.update({
+  id: '/fleet',
+  path: '/fleet',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const DashboardRoute = DashboardRouteImport.update({
+  id: '/dashboard',
+  path: '/dashboard',
   getParentRoute: () => rootRouteImport,
 } as any)
 const ContractsRoute = ContractsRouteImport.update({
@@ -40,47 +77,124 @@ const IndexRoute = IndexRouteImport.update({
   path: '/',
   getParentRoute: () => rootRouteImport,
 } as any)
+const HireCarIdRoute = HireCarIdRouteImport.update({
+  id: '/hire/$carId',
+  path: '/hire/$carId',
+  getParentRoute: () => rootRouteImport,
+} as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/admin': typeof AdminRoute
   '/contracts': typeof ContractsRoute
+  '/dashboard': typeof DashboardRoute
+  '/fleet': typeof FleetRoute
+  '/login': typeof LoginRoute
+  '/register': typeof RegisterRoute
+  '/settings': typeof SettingsRoute
   '/tracker': typeof TrackerRoute
   '/user': typeof UserRoute
+  '/wallet': typeof WalletRoute
+  '/hire/$carId': typeof HireCarIdRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/admin': typeof AdminRoute
   '/contracts': typeof ContractsRoute
+  '/dashboard': typeof DashboardRoute
+  '/fleet': typeof FleetRoute
+  '/login': typeof LoginRoute
+  '/register': typeof RegisterRoute
+  '/settings': typeof SettingsRoute
   '/tracker': typeof TrackerRoute
   '/user': typeof UserRoute
+  '/wallet': typeof WalletRoute
+  '/hire/$carId': typeof HireCarIdRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
   '/admin': typeof AdminRoute
   '/contracts': typeof ContractsRoute
+  '/dashboard': typeof DashboardRoute
+  '/fleet': typeof FleetRoute
+  '/login': typeof LoginRoute
+  '/register': typeof RegisterRoute
+  '/settings': typeof SettingsRoute
   '/tracker': typeof TrackerRoute
   '/user': typeof UserRoute
+  '/wallet': typeof WalletRoute
+  '/hire/$carId': typeof HireCarIdRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
-  fullPaths: '/' | '/admin' | '/contracts' | '/tracker' | '/user'
+  fullPaths:
+    | '/'
+    | '/admin'
+    | '/contracts'
+    | '/dashboard'
+    | '/fleet'
+    | '/login'
+    | '/register'
+    | '/settings'
+    | '/tracker'
+    | '/user'
+    | '/wallet'
+    | '/hire/$carId'
   fileRoutesByTo: FileRoutesByTo
-  to: '/' | '/admin' | '/contracts' | '/tracker' | '/user'
-  id: '__root__' | '/' | '/admin' | '/contracts' | '/tracker' | '/user'
+  to:
+    | '/'
+    | '/admin'
+    | '/contracts'
+    | '/dashboard'
+    | '/fleet'
+    | '/login'
+    | '/register'
+    | '/settings'
+    | '/tracker'
+    | '/user'
+    | '/wallet'
+    | '/hire/$carId'
+  id:
+    | '__root__'
+    | '/'
+    | '/admin'
+    | '/contracts'
+    | '/dashboard'
+    | '/fleet'
+    | '/login'
+    | '/register'
+    | '/settings'
+    | '/tracker'
+    | '/user'
+    | '/wallet'
+    | '/hire/$carId'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
   AdminRoute: typeof AdminRoute
   ContractsRoute: typeof ContractsRoute
+  DashboardRoute: typeof DashboardRoute
+  FleetRoute: typeof FleetRoute
+  LoginRoute: typeof LoginRoute
+  RegisterRoute: typeof RegisterRoute
+  SettingsRoute: typeof SettingsRoute
   TrackerRoute: typeof TrackerRoute
   UserRoute: typeof UserRoute
+  WalletRoute: typeof WalletRoute
+  HireCarIdRoute: typeof HireCarIdRoute
 }
 
 declare module '@tanstack/react-router' {
   interface FileRoutesByPath {
+    '/wallet': {
+      id: '/wallet'
+      path: '/wallet'
+      fullPath: '/wallet'
+      preLoaderRoute: typeof WalletRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/user': {
       id: '/user'
       path: '/user'
@@ -93,6 +207,41 @@ declare module '@tanstack/react-router' {
       path: '/tracker'
       fullPath: '/tracker'
       preLoaderRoute: typeof TrackerRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/settings': {
+      id: '/settings'
+      path: '/settings'
+      fullPath: '/settings'
+      preLoaderRoute: typeof SettingsRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/register': {
+      id: '/register'
+      path: '/register'
+      fullPath: '/register'
+      preLoaderRoute: typeof RegisterRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/login': {
+      id: '/login'
+      path: '/login'
+      fullPath: '/login'
+      preLoaderRoute: typeof LoginRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/fleet': {
+      id: '/fleet'
+      path: '/fleet'
+      fullPath: '/fleet'
+      preLoaderRoute: typeof FleetRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/dashboard': {
+      id: '/dashboard'
+      path: '/dashboard'
+      fullPath: '/dashboard'
+      preLoaderRoute: typeof DashboardRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/contracts': {
@@ -116,6 +265,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof IndexRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/hire/$carId': {
+      id: '/hire/$carId'
+      path: '/hire/$carId'
+      fullPath: '/hire/$carId'
+      preLoaderRoute: typeof HireCarIdRouteImport
+      parentRoute: typeof rootRouteImport
+    }
   }
 }
 
@@ -123,8 +279,15 @@ const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   AdminRoute: AdminRoute,
   ContractsRoute: ContractsRoute,
+  DashboardRoute: DashboardRoute,
+  FleetRoute: FleetRoute,
+  LoginRoute: LoginRoute,
+  RegisterRoute: RegisterRoute,
+  SettingsRoute: SettingsRoute,
   TrackerRoute: TrackerRoute,
   UserRoute: UserRoute,
+  WalletRoute: WalletRoute,
+  HireCarIdRoute: HireCarIdRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
