@@ -1,7 +1,10 @@
 import { Link } from "@tanstack/react-router";
-import { Shield } from "lucide-react";
+import { LogOut, Shield } from "lucide-react";
+import { logout, useSession } from "@/lib/auth";
 
 export default function Nav() {
+  const session = useSession();
+
   return (
     <header className="fixed top-0 inset-x-0 z-50">
       <div className="mx-auto max-w-7xl px-6 py-4">
@@ -15,22 +18,50 @@ export default function Nav() {
               Ritah<span className="text-[var(--neon)]">.</span>
             </span>
           </Link>
-          <nav className="hidden md:flex items-center gap-6 text-sm text-muted-foreground">
-            <a href="/#why" className="hover:text-foreground transition">Why Now</a>
-            <a href="/#features" className="hover:text-foreground transition">How it works</a>
-            <a href="/#rental-flow" className="hover:text-foreground transition">Rentals</a>
-            <a href="/#flow" className="hover:text-foreground transition">Flow</a>
-            <Link to="/user" className="hover:text-foreground transition" activeProps={{ className: "text-foreground" }}>User</Link>
-            <Link to="/contracts" className="hover:text-foreground transition" activeProps={{ className: "text-foreground" }}>Contracts</Link>
-            <Link to="/tracker" className="hover:text-foreground transition" activeProps={{ className: "text-foreground" }}>Tracker</Link>
-            <Link to="/admin" className="hover:text-foreground transition" activeProps={{ className: "text-foreground" }}>Admin</Link>
+          <nav className="hidden md:flex items-center gap-5 text-sm text-muted-foreground">
+            {!session && (
+              <>
+                <a href="/#why" className="hover:text-foreground transition">Why Now</a>
+                <a href="/#features" className="hover:text-foreground transition">How it works</a>
+              </>
+            )}
+            {session?.role === "owner" && (
+              <>
+                <Link to="/dashboard" className="hover:text-foreground" activeProps={{ className: "text-foreground" }}>Dashboard</Link>
+                <Link to="/fleet" className="hover:text-foreground" activeProps={{ className: "text-foreground" }}>Fleet</Link>
+                <Link to="/contracts" className="hover:text-foreground" activeProps={{ className: "text-foreground" }}>Contracts</Link>
+                <Link to="/tracker" className="hover:text-foreground" activeProps={{ className: "text-foreground" }}>Tracker</Link>
+              </>
+            )}
+            {session?.role === "renter" && (
+              <>
+                <Link to="/wallet" className="hover:text-foreground" activeProps={{ className: "text-foreground" }}>Wallet</Link>
+                <Link to="/user" className="hover:text-foreground" activeProps={{ className: "text-foreground" }}>Hires</Link>
+              </>
+            )}
+            {session?.role === "admin" && (
+              <Link to="/admin" className="hover:text-foreground" activeProps={{ className: "text-foreground" }}>Admin</Link>
+            )}
+            {session && (
+              <Link to="/settings" className="hover:text-foreground" activeProps={{ className: "text-foreground" }}>Settings</Link>
+            )}
           </nav>
-          <a
-            href="/#cta"
-            className="rounded-full bg-[var(--neon)] text-[var(--primary-foreground)] px-4 py-2 text-sm font-semibold hover:opacity-90 transition shadow-[0_0_20px_rgba(0,217,255,0.45)]"
-          >
-            Request Demo
-          </a>
+          {session ? (
+            <button
+              onClick={logout}
+              className="inline-flex items-center gap-1.5 rounded-full border border-border px-4 py-2 text-xs font-mono text-muted-foreground hover:text-foreground"
+            >
+              <LogOut className="h-3 w-3" />
+              {session.name.split(" ")[0]}
+            </button>
+          ) : (
+            <Link
+              to="/login"
+              className="rounded-full bg-[var(--neon)] text-[var(--primary-foreground)] px-4 py-2 text-sm font-semibold hover:opacity-90 transition shadow-[0_0_20px_rgba(0,217,255,0.45)]"
+            >
+              Login
+            </Link>
+          )}
         </div>
       </div>
     </header>
