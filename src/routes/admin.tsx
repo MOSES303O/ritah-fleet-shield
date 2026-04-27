@@ -18,8 +18,14 @@ import { downloadContractPdf } from "@/lib/contractPdf";
 import { downloadBundlePdf } from "@/lib/bundlePdf";
 import BundleTimeline from "@/components/BundleTimeline";
 import { toast } from "sonner";
-
-type BundleDispute = { reason: string; overrideApproved: boolean; createdAt: string };
+import {
+  appendEvent,
+  getDisputes,
+  nowLabel,
+  saveDisputes,
+  subscribeDisputes,
+  type BundleDispute,
+} from "@/lib/bundleDisputes";
 
 export const Route = createFileRoute("/admin")({
   head: () => ({
