@@ -63,6 +63,21 @@ function UserPage() {
   const [bundleDays, setBundleDays] = useState(3);
   const [bundles, setBundles] = useState<FleetHireBundle[]>([]);
   const [bundleError, setBundleError] = useState<string | null>(null);
+  const [disputes, setDisputes] = useState<Record<string, BundleDispute>>({});
+
+  useEffect(() => {
+    const sync = () => setDisputes(getDisputes());
+    sync();
+    return subscribeDisputes(sync);
+  }, []);
+
+  const acknowledgeDispute = (id: string) => {
+    const all = getDisputes();
+    const d = all[id];
+    if (!d) return;
+    const updated = appendEvent(d, { actor: "RENTER", action: "RENTER_ACK", detail: "Renter acknowledged the dispute notice." });
+    saveDisputes({ ...all, [id]: updated });
+  };
   // Cars already locked by an active/approved/requested bundle or contract
   const lockedCarIds = useMemo(() => {
     const fromContracts = contracts
