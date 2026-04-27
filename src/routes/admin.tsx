@@ -64,6 +64,17 @@ function AdminPage() {
   const [bundleDisputes, setBundleDisputes] = useState<Record<string, BundleDispute>>({});
   const [disputeDraft, setDisputeDraft] = useState<Record<string, string>>({});
 
+  useEffect(() => {
+    const sync = () => setBundleDisputes(getDisputes());
+    sync();
+    return subscribeDisputes(sync);
+  }, []);
+
+  const persistDisputes = (next: Record<string, BundleDispute>) => {
+    setBundleDisputes(next);
+    saveDisputes(next);
+  };
+
   const blankCar = (): FleetCar => ({
     id: `car-${Date.now()}`,
     reg: "",
