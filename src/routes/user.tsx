@@ -1,7 +1,7 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { z } from "zod";
-import { AlertTriangle, Download, FileText, Send, ShieldCheck, Wallet } from "lucide-react";
+import { AlertTriangle, Download, FileText, Send, ShieldAlert, ShieldCheck, Wallet } from "lucide-react";
 import Nav from "@/components/Nav";
 import FineLedgerPanel from "@/components/FineLedgerPanel";
 import ContractTimeline from "@/components/ContractTimeline";
@@ -21,6 +21,13 @@ import {
 import { downloadContractPdf } from "@/lib/contractPdf";
 import { downloadBundlePdf } from "@/lib/bundlePdf";
 import BundleTimeline from "@/components/BundleTimeline";
+import {
+  appendEvent,
+  getDisputes,
+  saveDisputes,
+  subscribeDisputes,
+  type BundleDispute,
+} from "@/lib/bundleDisputes";
 
 const searchSchema = z.object({ carId: z.string().optional() });
 
