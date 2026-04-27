@@ -18,8 +18,14 @@ import { downloadContractPdf } from "@/lib/contractPdf";
 import { downloadBundlePdf } from "@/lib/bundlePdf";
 import BundleTimeline from "@/components/BundleTimeline";
 import { toast } from "sonner";
-
-type BundleDispute = { reason: string; overrideApproved: boolean; createdAt: string };
+import {
+  appendEvent,
+  getDisputes,
+  nowLabel,
+  saveDisputes,
+  subscribeDisputes,
+  type BundleDispute,
+} from "@/lib/bundleDisputes";
 
 export const Route = createFileRoute("/admin")({
   head: () => ({
@@ -57,6 +63,17 @@ function AdminPage() {
   const [createForm, setCreateForm] = useState({ carId: rentalFleet[0]?.id ?? "", renter: "", phone: "", email: "" });
   const [bundleDisputes, setBundleDisputes] = useState<Record<string, BundleDispute>>({});
   const [disputeDraft, setDisputeDraft] = useState<Record<string, string>>({});
+
+  useEffect(() => {
+    const sync = () => setBundleDisputes(getDisputes());
+    sync();
+    return subscribeDisputes(sync);
+  }, []);
+
+  const persistDisputes = (next: Record<string, BundleDispute>) => {
+    setBundleDisputes(next);
+    saveDisputes(next);
+  };
 
   const blankCar = (): FleetCar => ({
     id: `car-${Date.now()}`,
@@ -153,25 +170,46 @@ function AdminPage() {
       toast.warning("Add a dispute reason before filing.");
       return;
     }
-    setBundleDisputes((prev) => ({
-      ...prev,
-      [id]: { reason, overrideApproved: false, createdAt: new Date().toLocaleTimeString("en-KE", { hour: "2-digit", minute: "2-digit" }) },
-    }));
+    const base: BundleDispute = {
+      bundleId: id,
+      reason,
+      overrideApproved: false,
+      createdAt: nowLabel(),
+      attachments: [],
+      history: [],
+    };
+    const withEvent = appendEvent(base, { actor: "ADMIN", action: "FILED", detail: reason });
+    persistDisputes({ ...bundleDisputes, [id]: withEvent });
     setDisputeDraft((prev) => ({ ...prev, [id]: "" }));
     toast.info("Dispute filed", { description: "Renter notified · awaiting override decision." });
   };
 
+  const attachDisputeFiles = (id: string, files: FileList | null) => {
+    const d = bundleDisputes[id];
+    if (!d || !files || files.length === 0) return;
+    const adds = Array.from(files).map((f) => ({ name: f.name, size: f.size }));
+    let updated: BundleDispute = { ...d, attachments: [...d.attachments, ...adds] };
+    for (const a of adds) {
+      updated = appendEvent(updated, { actor: "ADMIN", action: "ATTACHMENT_ADDED", detail: `${a.name} (${Math.round(a.size / 1024)} KB)` });
+    }
+    persistDisputes({ ...bundleDisputes, [id]: updated });
+    toast.success(`Attached ${adds.length} file${adds.length === 1 ? "" : "s"}`);
+  };
+
   const overrideBundleDispute = (id: string) => {
-    setBundleDisputes((prev) => prev[id] ? { ...prev, [id]: { ...prev[id], overrideApproved: true } } : prev);
+    const d = bundleDisputes[id];
+    if (!d) return;
+    const updated = appendEvent({ ...d, overrideApproved: true }, {
+      actor: "ADMIN", action: "OVERRIDE_AUTHORISED", detail: "Approval unlocked despite conflict.",
+    });
+    persistDisputes({ ...bundleDisputes, [id]: updated });
     toast.success("Conflict override authorised", { description: "You can now approve this bundle." });
   };
 
   const clearBundleDispute = (id: string) => {
-    setBundleDisputes((prev) => {
-      const next = { ...prev };
-      delete next[id];
-      return next;
-    });
+    const next = { ...bundleDisputes };
+    delete next[id];
+    persistDisputes(next);
     toast("Dispute cleared.");
   };
 
@@ -414,6 +452,23 @@ function AdminPage() {
                         <div className="rounded-md border border-[var(--danger)]/30 bg-background/30 p-2 text-foreground">
                           <div className="text-[10px] font-mono uppercase tracking-widest text-[var(--danger)]">Dispute · {dispute.createdAt}</div>
                           <div className="mt-1 text-[11px]">{dispute.reason}</div>
+
+                          {/* Attachments */}
+                          <div className="mt-2">
+                            <div className="text-[10px] font-mono uppercase tracking-widest text-muted-foreground">Attachments ({dispute.attachments.length})</div>
+                            {dispute.attachments.length > 0 && (
+                              <ul className="mt-1 space-y-0.5">
+                                {dispute.attachments.map((a, i) => (
+                                  <li key={i} className="text-[11px] text-foreground">📎 {a.name} <span className="text-muted-foreground">({Math.round(a.size / 1024)} KB)</span></li>
+                                ))}
+                              </ul>
+                            )}
+                            <label className="mt-1 inline-flex cursor-pointer items-center gap-1 rounded-md border border-border px-2 py-1 text-[11px] hover:border-[var(--neon)]/50">
+                              <Upload className="h-3 w-3" /> Add evidence
+                              <input type="file" multiple className="hidden" onChange={(e) => attachDisputeFiles(b.id, e.target.files)} />
+                            </label>
+                          </div>
+
                           <div className="mt-2 flex flex-wrap gap-2">
                             {!dispute.overrideApproved ? (
                               <button onClick={() => overrideBundleDispute(b.id)} className="rounded-md border border-[var(--lime)]/50 bg-[var(--lime)]/10 px-2 py-1 text-[11px] font-bold text-[var(--lime)]">
@@ -424,9 +479,28 @@ function AdminPage() {
                             )}
                             <button onClick={() => clearBundleDispute(b.id)} className="rounded-md border border-border px-2 py-1 text-[11px]">Clear dispute</button>
                           </div>
+
+                          {/* Resolution history */}
+                          <div className="mt-3 border-t border-border/40 pt-2">
+                            <div className="text-[10px] font-mono uppercase tracking-widest text-muted-foreground">Resolution history</div>
+                            <ol className="mt-1 space-y-1">
+                              {dispute.history.map((ev) => (
+                                <li key={ev.id} className="grid grid-cols-[auto_1fr] gap-2 text-[11px]">
+                                  <span className="font-mono text-muted-foreground">{ev.at}</span>
+                                  <span><span className="text-[var(--neon)]">{ev.actor}</span> · <span className="text-foreground">{ev.action.replace(/_/g, " ")}</span> — <span className="text-muted-foreground">{ev.detail}</span></span>
+                                </li>
+                              ))}
+                            </ol>
+                          </div>
                         </div>
                       )}
                     </div>
+                  )}
+                  {b.status === "REQUESTED" && conflicts.length > 0 && !dispute && (
+                    <div className="mt-2 text-[11px] text-[var(--danger)]"><ShieldAlert className="mr-1 inline h-3 w-3" />File a dispute before approval is allowed.</div>
+                  )}
+                  {b.status === "REQUESTED" && conflicts.length > 0 && dispute && !dispute.overrideApproved && (
+                    <div className="mt-2 text-[11px] text-[var(--danger)]"><ShieldAlert className="mr-1 inline h-3 w-3" />Authorise override to unlock approval.</div>
                   )}
 
                   <div className="mt-3 rounded-lg border border-border/60 bg-background/40 p-3">

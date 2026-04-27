@@ -1,7 +1,7 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { z } from "zod";
-import { AlertTriangle, Download, FileText, Send, ShieldCheck, Wallet } from "lucide-react";
+import { AlertTriangle, Download, FileText, Send, ShieldAlert, ShieldCheck, Wallet } from "lucide-react";
 import Nav from "@/components/Nav";
 import FineLedgerPanel from "@/components/FineLedgerPanel";
 import ContractTimeline from "@/components/ContractTimeline";
@@ -21,6 +21,13 @@ import {
 import { downloadContractPdf } from "@/lib/contractPdf";
 import { downloadBundlePdf } from "@/lib/bundlePdf";
 import BundleTimeline from "@/components/BundleTimeline";
+import {
+  appendEvent,
+  getDisputes,
+  saveDisputes,
+  subscribeDisputes,
+  type BundleDispute,
+} from "@/lib/bundleDisputes";
 
 const searchSchema = z.object({ carId: z.string().optional() });
 
@@ -56,6 +63,21 @@ function UserPage() {
   const [bundleDays, setBundleDays] = useState(3);
   const [bundles, setBundles] = useState<FleetHireBundle[]>([]);
   const [bundleError, setBundleError] = useState<string | null>(null);
+  const [disputes, setDisputes] = useState<Record<string, BundleDispute>>({});
+
+  useEffect(() => {
+    const sync = () => setDisputes(getDisputes());
+    sync();
+    return subscribeDisputes(sync);
+  }, []);
+
+  const acknowledgeDispute = (id: string) => {
+    const all = getDisputes();
+    const d = all[id];
+    if (!d) return;
+    const updated = appendEvent(d, { actor: "RENTER", action: "RENTER_ACK", detail: "Renter acknowledged the dispute notice." });
+    saveDisputes({ ...all, [id]: updated });
+  };
   // Cars already locked by an active/approved/requested bundle or contract
   const lockedCarIds = useMemo(() => {
     const fromContracts = contracts
@@ -264,6 +286,38 @@ function UserPage() {
                   <div className="mt-1 text-muted-foreground">
                     {b.carIds.map((id) => rentalFleet.find((c) => c.id === id)?.reg ?? id).join(" · ")}
                   </div>
+                  {disputes[b.id] && (
+                    <div className="mt-3 rounded-md border border-[var(--danger)]/50 bg-[var(--danger)]/10 p-3 text-[11px]">
+                      <div className="flex items-center gap-1 text-[var(--danger)] font-bold uppercase tracking-widest text-[10px] font-mono">
+                        <ShieldAlert className="h-3 w-3" /> Dispute notice · filed {disputes[b.id].createdAt}
+                      </div>
+                      <div className="mt-1 text-foreground">{disputes[b.id].reason}</div>
+                      {disputes[b.id].attachments.length > 0 && (
+                        <div className="mt-1 text-muted-foreground">
+                          {disputes[b.id].attachments.length} evidence file(s) attached by owner.
+                        </div>
+                      )}
+                      <div className="mt-1 text-[var(--lime)]">
+                        {disputes[b.id].overrideApproved ? "Owner authorised override — bundle can proceed." : "Awaiting owner override decision."}
+                      </div>
+                      <div className="mt-2 flex flex-wrap gap-2">
+                        <button onClick={() => acknowledgeDispute(b.id)} className="rounded-md border border-border px-2 py-1 text-[11px] hover:border-[var(--neon)]/50">
+                          Acknowledge
+                        </button>
+                      </div>
+                      <details className="mt-2">
+                        <summary className="cursor-pointer text-[10px] font-mono uppercase tracking-widest text-muted-foreground">Resolution history ({disputes[b.id].history.length})</summary>
+                        <ol className="mt-1 space-y-1">
+                          {disputes[b.id].history.map((ev) => (
+                            <li key={ev.id} className="grid grid-cols-[auto_1fr] gap-2 text-[11px]">
+                              <span className="font-mono text-muted-foreground">{ev.at}</span>
+                              <span><span className="text-[var(--neon)]">{ev.actor}</span> · {ev.action.replace(/_/g, " ")} — <span className="text-muted-foreground">{ev.detail}</span></span>
+                            </li>
+                          ))}
+                        </ol>
+                      </details>
+                    </div>
+                  )}
                   <div className="mt-3 rounded-md border border-border/60 bg-background/40 p-3">
                     <BundleTimeline status={b.status} carCount={b.carIds.length} />
                   </div>
