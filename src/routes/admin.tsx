@@ -452,6 +452,23 @@ function AdminPage() {
                         <div className="rounded-md border border-[var(--danger)]/30 bg-background/30 p-2 text-foreground">
                           <div className="text-[10px] font-mono uppercase tracking-widest text-[var(--danger)]">Dispute · {dispute.createdAt}</div>
                           <div className="mt-1 text-[11px]">{dispute.reason}</div>
+
+                          {/* Attachments */}
+                          <div className="mt-2">
+                            <div className="text-[10px] font-mono uppercase tracking-widest text-muted-foreground">Attachments ({dispute.attachments.length})</div>
+                            {dispute.attachments.length > 0 && (
+                              <ul className="mt-1 space-y-0.5">
+                                {dispute.attachments.map((a, i) => (
+                                  <li key={i} className="text-[11px] text-foreground">📎 {a.name} <span className="text-muted-foreground">({Math.round(a.size / 1024)} KB)</span></li>
+                                ))}
+                              </ul>
+                            )}
+                            <label className="mt-1 inline-flex cursor-pointer items-center gap-1 rounded-md border border-border px-2 py-1 text-[11px] hover:border-[var(--neon)]/50">
+                              <Upload className="h-3 w-3" /> Add evidence
+                              <input type="file" multiple className="hidden" onChange={(e) => attachDisputeFiles(b.id, e.target.files)} />
+                            </label>
+                          </div>
+
                           <div className="mt-2 flex flex-wrap gap-2">
                             {!dispute.overrideApproved ? (
                               <button onClick={() => overrideBundleDispute(b.id)} className="rounded-md border border-[var(--lime)]/50 bg-[var(--lime)]/10 px-2 py-1 text-[11px] font-bold text-[var(--lime)]">
@@ -462,9 +479,28 @@ function AdminPage() {
                             )}
                             <button onClick={() => clearBundleDispute(b.id)} className="rounded-md border border-border px-2 py-1 text-[11px]">Clear dispute</button>
                           </div>
+
+                          {/* Resolution history */}
+                          <div className="mt-3 border-t border-border/40 pt-2">
+                            <div className="text-[10px] font-mono uppercase tracking-widest text-muted-foreground">Resolution history</div>
+                            <ol className="mt-1 space-y-1">
+                              {dispute.history.map((ev) => (
+                                <li key={ev.id} className="grid grid-cols-[auto_1fr] gap-2 text-[11px]">
+                                  <span className="font-mono text-muted-foreground">{ev.at}</span>
+                                  <span><span className="text-[var(--neon)]">{ev.actor}</span> · <span className="text-foreground">{ev.action.replace(/_/g, " ")}</span> — <span className="text-muted-foreground">{ev.detail}</span></span>
+                                </li>
+                              ))}
+                            </ol>
+                          </div>
                         </div>
                       )}
                     </div>
+                  )}
+                  {b.status === "REQUESTED" && conflicts.length > 0 && !dispute && (
+                    <div className="mt-2 text-[11px] text-[var(--danger)]"><ShieldAlert className="mr-1 inline h-3 w-3" />File a dispute before approval is allowed.</div>
+                  )}
+                  {b.status === "REQUESTED" && conflicts.length > 0 && dispute && !dispute.overrideApproved && (
+                    <div className="mt-2 text-[11px] text-[var(--danger)]"><ShieldAlert className="mr-1 inline h-3 w-3" />Authorise override to unlock approval.</div>
                   )}
 
                   <div className="mt-3 rounded-lg border border-border/60 bg-background/40 p-3">
