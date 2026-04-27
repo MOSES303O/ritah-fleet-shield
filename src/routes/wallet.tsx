@@ -45,7 +45,7 @@ function WalletPage() {
             <div className="space-y-2 text-sm">
               {mockWalletHistory.map((h) => (
                 <div key={h.id} className="flex justify-between border-t border-border pt-2">
-                  <span className="text-muted-foreground">{h.label}</span>
+                  <span className="text-muted-foreground">{h.type} · {h.note}</span>
                   <span>{formatKes(h.amount)}</span>
                 </div>
               ))}
@@ -54,7 +54,7 @@ function WalletPage() {
         </div>
 
         <div className="mt-8">
-          <FineLedgerPanel fines={mockFineLedger} />
+          <FineLedgerPanel title="NTSA fine ledger" fines={mockFineLedger} />
         </div>
 
         <div className="mt-8">
