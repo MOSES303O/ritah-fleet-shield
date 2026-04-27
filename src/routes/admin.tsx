@@ -170,25 +170,46 @@ function AdminPage() {
       toast.warning("Add a dispute reason before filing.");
       return;
     }
-    setBundleDisputes((prev) => ({
-      ...prev,
-      [id]: { reason, overrideApproved: false, createdAt: new Date().toLocaleTimeString("en-KE", { hour: "2-digit", minute: "2-digit" }) },
-    }));
+    const base: BundleDispute = {
+      bundleId: id,
+      reason,
+      overrideApproved: false,
+      createdAt: nowLabel(),
+      attachments: [],
+      history: [],
+    };
+    const withEvent = appendEvent(base, { actor: "ADMIN", action: "FILED", detail: reason });
+    persistDisputes({ ...bundleDisputes, [id]: withEvent });
     setDisputeDraft((prev) => ({ ...prev, [id]: "" }));
     toast.info("Dispute filed", { description: "Renter notified · awaiting override decision." });
   };
 
+  const attachDisputeFiles = (id: string, files: FileList | null) => {
+    const d = bundleDisputes[id];
+    if (!d || !files || files.length === 0) return;
+    const adds = Array.from(files).map((f) => ({ name: f.name, size: f.size }));
+    let updated: BundleDispute = { ...d, attachments: [...d.attachments, ...adds] };
+    for (const a of adds) {
+      updated = appendEvent(updated, { actor: "ADMIN", action: "ATTACHMENT_ADDED", detail: `${a.name} (${Math.round(a.size / 1024)} KB)` });
+    }
+    persistDisputes({ ...bundleDisputes, [id]: updated });
+    toast.success(`Attached ${adds.length} file${adds.length === 1 ? "" : "s"}`);
+  };
+
   const overrideBundleDispute = (id: string) => {
-    setBundleDisputes((prev) => prev[id] ? { ...prev, [id]: { ...prev[id], overrideApproved: true } } : prev);
+    const d = bundleDisputes[id];
+    if (!d) return;
+    const updated = appendEvent({ ...d, overrideApproved: true }, {
+      actor: "ADMIN", action: "OVERRIDE_AUTHORISED", detail: "Approval unlocked despite conflict.",
+    });
+    persistDisputes({ ...bundleDisputes, [id]: updated });
     toast.success("Conflict override authorised", { description: "You can now approve this bundle." });
   };
 
   const clearBundleDispute = (id: string) => {
-    setBundleDisputes((prev) => {
-      const next = { ...prev };
-      delete next[id];
-      return next;
-    });
+    const next = { ...bundleDisputes };
+    delete next[id];
+    persistDisputes(next);
     toast("Dispute cleared.");
   };
 
